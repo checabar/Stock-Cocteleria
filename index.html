@@ -834,90 +834,6 @@
       text-align: right;
     }
 
-    /* ─── EGRESO CHECKBOX GRID ───────────────────────────────────────────────── */
-    .egreso-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 10px;
-      padding: 20px;
-    }
-
-    .egreso-card {
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      border-radius: var(--radius-sm);
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: border-color .15s, background .15s;
-      user-select: none;
-    }
-
-    .egreso-card:hover { border-color: var(--text3); }
-
-    .egreso-card.selected {
-      border-color: var(--accent);
-      background: rgba(168,85,247,.06);
-    }
-
-    .egreso-card input[type=checkbox] {
-      accent-color: var(--accent);
-      width: 16px;
-      height: 16px;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
-
-    .egreso-card-info { flex: 1; overflow: hidden; }
-
-    .egreso-card-num {
-      font-weight: 700;
-      font-size: .88rem;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .egreso-card-producto {
-      font-size: .76rem;
-      color: var(--text2);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .egreso-card-fecha {
-      font-size: .7rem;
-      color: var(--text3);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .egreso-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg3);
-      border-radius: var(--radius) var(--radius) 0 0;
-    }
-
-    .egreso-toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: .84rem;
-      color: var(--text2);
-    }
-
-    .egreso-sel-count {
-      font-weight: 700;
-      color: var(--text);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
     /* ─── DETALLE MODAL ──────────────────────────────────────────────────────── */
     .detail-hist-item {
       display: flex;
@@ -1056,13 +972,6 @@
         </svg>
         Botellas
       </div>
-      <div class="nav-item" data-page="egresos">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 14l-4-4 4-4"/>
-          <path d="M5 10h11a4 4 0 0 1 0 8h-1"/>
-        </svg>
-        Egresos
-      </div>
       <div class="nav-item" data-page="historial">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 8v4l3 3"/>
@@ -1166,37 +1075,6 @@
       </div>
     </div>
 
-    <!-- ─── PAGE: EGRESOS ─── -->
-    <div class="page" id="page-egresos">
-      <div class="section-title" style="margin-bottom:14px;">Botellas vacías — pendientes de egreso</div>
-      <div class="card" style="margin-bottom:28px;">
-        <div class="egreso-toolbar">
-          <div class="egreso-toolbar-left">
-            <span id="egresoSelLabel"><span class="egreso-sel-count" id="egresoSelCount">0</span> seleccionadas</span>
-            <button class="btn btn-ghost btn-sm" onclick="toggleSelTodos()">Sel. todas</button>
-          </div>
-          <button class="btn btn-primary" id="btnRegistrarEgreso" onclick="abrirModalEgreso()" disabled
-            style="opacity:.5;cursor:not-allowed;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M9 14l-4-4 4-4"/>
-              <path d="M5 10h11a4 4 0 0 1 0 8h-1"/>
-            </svg>
-            Registrar Egreso
-          </button>
-        </div>
-        <div id="egresoGrid" class="egreso-grid"></div>
-        <div id="egresoVacioEmpty" class="empty-state" style="display:none;">
-          <div class="big">✅</div>
-          <p>No hay botellas vacías pendientes de egreso.</p>
-        </div>
-      </div>
-
-      <div class="section-title" style="margin-bottom:14px;">Historial de egresos</div>
-      <div class="card">
-        <div id="egresoHistList" class="hist-scroll"></div>
-      </div>
-    </div>
-
     <!-- ─── PAGE: HISTORIAL ─── -->
     <div class="page" id="page-historial">
       <div class="filter-bar">
@@ -1206,7 +1084,6 @@
           <option value="cerrada_stock">→ Cerrada</option>
           <option value="abierta_barra">→ Abierta en Barra</option>
           <option value="vacia">→ Vacía</option>
-          <option value="egresada">→ Egresada</option>
         </select>
       </div>
       <div class="card">
@@ -1308,28 +1185,6 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════ MODAL EGRESO -->
-  <div class="modal-bg" id="modalEgreso">
-    <div class="modal">
-      <div class="modal-header">
-        <h3>🗑️ Registrar Egreso</h3>
-        <button class="modal-close" onclick="closeModal('modalEgreso')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div id="modalEgresoDesc" style="color:var(--text2);font-size:.88rem;margin-bottom:16px;"></div>
-        <div class="form-row">
-          <label class="form-label">Observación (opcional)</label>
-          <input class="form-input" id="egresoObsInput" type="text"
-            placeholder="ej: fin de semana, evento especial...">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('modalEgreso')">Cancelar</button>
-        <button class="btn btn-primary" id="modalEgresoConfirm">Confirmar Egreso</button>
-      </div>
-    </div>
-  </div>
-
   <!-- ═══════════════════════════════════════════════════════════ MODAL DETALLE BOTELLA -->
   <div class="modal-bg" id="modalDetalle">
     <div class="modal" style="max-width:520px;">
@@ -1412,28 +1267,24 @@
     const ESTADOS = {
       cerrada_stock:  { label: 'Cerrada',      badgeClass: 'badge-green',  color: 'green',  icon: '🟢' },
       abierta_barra:  { label: 'Abierta',       badgeClass: 'badge-yellow', color: 'yellow', icon: '🟡' },
-      vacia:          { label: 'Vacía',         badgeClass: 'badge-red',    color: 'red',    icon: '🔴' },
-      egresada:       { label: 'Egresada',      badgeClass: 'badge-gray',   color: 'gray',   icon: '↩️' }
+      vacia:          { label: 'Vacía',         badgeClass: 'badge-red',    color: 'red',    icon: '🔴' }
     };
 
     const UBICACION_MAP = {
       cerrada_stock: 'deposito',
       abierta_barra: 'barra',
-      vacia:         'sector_vacias',
-      egresada:      'descartada'
+      vacia:         'sector_vacias'
     };
 
     const UBICACION_LABELS = {
       deposito:      'Depósito',
       barra:         'Barra',
-      sector_vacias: 'Sector Vacías',
-      descartada:    'Descartada / Egresada'
+      sector_vacias: 'Sector Vacías'
     };
 
     const PAGE_TITLES = {
       dashboard: 'Dashboard',
       botellas:  'Botellas',
-      egresos:   'Egresos',
       historial: 'Historial'
     };
 
@@ -1501,7 +1352,6 @@
 
       if (page === 'dashboard') renderDashboard();
       if (page === 'botellas') { renderProductosFilter(); renderBotellas(); }
-      if (page === 'egresos')   renderEgresos();
       if (page === 'historial') renderHistorial();
     }
 
@@ -1518,11 +1368,10 @@
 
     // ─── DASHBOARD ────────────────────────────────────────────────────────────────
     function renderDashboard() {
-      const stock   = botellas.filter(b => b.estado_actual !== 'egresada');
-      const cerradas = stock.filter(b => b.estado_actual === 'cerrada_stock').length;
-      const abiertas = stock.filter(b => b.estado_actual === 'abierta_barra').length;
-      const vacias   = stock.filter(b => b.estado_actual === 'vacia').length;
-      const total    = stock.length;
+      const cerradas = botellas.filter(b => b.estado_actual === 'cerrada_stock').length;
+      const abiertas = botellas.filter(b => b.estado_actual === 'abierta_barra').length;
+      const vacias   = botellas.filter(b => b.estado_actual === 'vacia').length;
+      const total    = cerradas + abiertas;
 
       document.getElementById('kpiGrid').innerHTML = `
         <div class="kpi-card green">
@@ -1543,7 +1392,7 @@
         <div class="kpi-card purple">
           <span class="kpi-icon">🍾</span>
           <div class="kpi-value">${total}</div>
-          <div class="kpi-label">Total en uso</div>
+          <div class="kpi-label">Total activas</div>
         </div>
       `;
 
@@ -1592,7 +1441,7 @@
 
     // ─── TABLA BOTELLAS ───────────────────────────────────────────────────────────
     function renderProductosFilter() {
-      const productos = [...new Set(botellas.filter(b => b.estado_actual !== 'egresada').map(b => b.producto))].sort();
+      const productos = [...new Set(botellas.map(b => b.producto))].sort();
       const sel = document.getElementById('filterProducto');
       const val = sel.value;
       sel.innerHTML = '<option value="">Todos los productos</option>' +
@@ -1605,14 +1454,13 @@
       const producto = document.getElementById('filterProducto').value;
 
       let filtered = botellas.filter(b => {
-        if (b.estado_actual === 'egresada') return false;
         if (q && !b.nombre_botella.toLowerCase().includes(q) && !b.producto.toLowerCase().includes(q)) return false;
         if (estado   && b.estado_actual !== estado)   return false;
         if (producto && b.producto      !== producto) return false;
         return true;
       }).sort((a, b) => a.nombre_botella.localeCompare(b.nombre_botella, undefined, { numeric: true }));
 
-      document.getElementById('countLabel').textContent = `${filtered.length} / ${botellas.filter(b=>b.estado_actual!=='egresada').length} botellas`;
+      document.getElementById('countLabel').textContent = `${filtered.length} / ${botellas.length} botellas`;
 
       const tbody = document.getElementById('botellasBody');
       tbody.innerHTML = filtered.map(b => {
@@ -1628,9 +1476,11 @@
           <td class="obs-cell" title="${esc(b.observaciones || '')}">${esc(b.observaciones || '—')}</td>
           <td>
             <div class="action-btns">
-              ${b.estado_actual !== 'cerrada_stock' ? `<button class="action-btn ab-green"  onclick="cambiarEstado('${b.id}','cerrada_stock')">🟢 Cerrada</button>` : ''}
-              ${b.estado_actual !== 'abierta_barra' ? `<button class="action-btn ab-yellow" onclick="cambiarEstado('${b.id}','abierta_barra')">🍸 Abierta</button>` : ''}
-              ${b.estado_actual !== 'vacia'          ? `<button class="action-btn ab-red"    onclick="cambiarEstado('${b.id}','vacia')">🔴 Vacía</button>` : ''}
+              ${b.estado_actual === 'vacia' ? '' : `
+                ${b.estado_actual !== 'cerrada_stock' ? `<button class="action-btn ab-green"  onclick="cambiarEstado('${b.id}','cerrada_stock')">🟢 Cerrada</button>` : ''}
+                ${b.estado_actual !== 'abierta_barra' ? `<button class="action-btn ab-yellow" onclick="cambiarEstado('${b.id}','abierta_barra')">🍸 Abierta</button>` : ''}
+                <button class="action-btn ab-red" onclick="cambiarEstado('${b.id}','vacia')">🔴 Vacía</button>
+              `}
               <button class="action-btn ab-del"  title="Ver historial" onclick="verDetalle('${b.id}')">📋</button>
               <button class="action-btn ab-blue" title="Editar"        onclick="editarBotella('${b.id}')">✏️</button>
               <button class="action-btn ab-del"  title="Eliminar"      onclick="confirmarEliminar('${b.id}')">🗑</button>
@@ -1639,9 +1489,11 @@
             <div class="mobile-actions" id="mob_${b.id}">
               <button class="action-btn ab-del btn-sm" onclick="toggleMobileMenu('${b.id}')">Acciones ▾</button>
               <div class="mobile-actions-menu" id="mobmenu_${b.id}">
-                ${b.estado_actual !== 'cerrada_stock' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','cerrada_stock');toggleMobileMenu('${b.id}')">🟢 Marcar Cerrada</button>` : ''}
-                ${b.estado_actual !== 'abierta_barra' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','abierta_barra');toggleMobileMenu('${b.id}')">🍸 Marcar Abierta</button>` : ''}
-                ${b.estado_actual !== 'vacia'          ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','vacia');toggleMobileMenu('${b.id}')">🔴 Marcar Vacía</button>` : ''}
+                ${b.estado_actual === 'vacia' ? '' : `
+                  ${b.estado_actual !== 'cerrada_stock' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','cerrada_stock');toggleMobileMenu('${b.id}')">🟢 Marcar Cerrada</button>` : ''}
+                  ${b.estado_actual !== 'abierta_barra' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','abierta_barra');toggleMobileMenu('${b.id}')">🍸 Marcar Abierta</button>` : ''}
+                  <button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','vacia');toggleMobileMenu('${b.id}')">🔴 Marcar Vacía</button>
+                `}
                 <button class="mobile-menu-item" onclick="verDetalle('${b.id}');toggleMobileMenu('${b.id}')">📋 Ver historial</button>
                 <button class="mobile-menu-item" onclick="editarBotella('${b.id}');toggleMobileMenu('${b.id}')">✏️ Editar</button>
                 <button class="mobile-menu-item" style="color:var(--red)" onclick="confirmarEliminar('${b.id}')">🗑 Eliminar</button>
@@ -2022,159 +1874,6 @@
       document.getElementById('modalDetalle').classList.add('open');
     }
 
-    // ─── EGRESOS ──────────────────────────────────────────────────────────────────
-    let egresoSeleccionados = new Set();
-
-    function renderEgresos() {
-      egresoSeleccionados.clear();
-      actualizarBotonEgreso();
-
-      const vacias = botellas
-        .filter(b => b.estado_actual === 'vacia')
-        .sort((a, b) => a.nombre_botella.localeCompare(b.nombre_botella, undefined, { numeric: true }));
-
-      const grid  = document.getElementById('egresoGrid');
-      const empty = document.getElementById('egresoVacioEmpty');
-
-      if (vacias.length === 0) {
-        grid.innerHTML = '';
-        empty.style.display = 'block';
-      } else {
-        empty.style.display = 'none';
-        grid.innerHTML = vacias.map(b => `
-          <div class="egreso-card" id="ecard_${b.id}" onclick="toggleEgresoCard('${b.id}')">
-            <input type="checkbox" id="echk_${b.id}" onclick="event.stopPropagation();toggleEgresoCard('${b.id}')">
-            <div class="egreso-card-info">
-              <div class="egreso-card-num">${esc(b.nombre_botella)} · ${esc(b.producto)}</div>
-              <div class="egreso-card-producto">${esc(b.marca || '')}</div>
-              <div class="egreso-card-fecha">Vacía desde ${formatFecha(b.fecha_ultimo_cambio)}</div>
-            </div>
-          </div>`).join('');
-      }
-
-      // Historial de egresos
-      const egresadas = movimientos
-        .filter(m => m.estado_nuevo === 'egresada')
-        .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
-
-      document.getElementById('egresoHistList').innerHTML = egresadas.length
-        ? egresadas.map(m => renderMovItem(m, true)).join('')
-        : '<div class="empty-state"><div class="big">↩️</div><p>Sin egresos registrados aún</p></div>';
-    }
-
-    function toggleEgresoCard(id) {
-      const card = document.getElementById('ecard_' + id);
-      const chk  = document.getElementById('echk_' + id);
-      if (egresoSeleccionados.has(id)) {
-        egresoSeleccionados.delete(id);
-        card.classList.remove('selected');
-        chk.checked = false;
-      } else {
-        egresoSeleccionados.add(id);
-        card.classList.add('selected');
-        chk.checked = true;
-      }
-      actualizarBotonEgreso();
-    }
-
-    function toggleSelTodos() {
-      const vacias = botellas.filter(b => b.estado_actual === 'vacia');
-      const todasSeleccionadas = vacias.every(b => egresoSeleccionados.has(b.id));
-      vacias.forEach(b => {
-        const card = document.getElementById('ecard_' + b.id);
-        const chk  = document.getElementById('echk_' + b.id);
-        if (!card) return;
-        if (todasSeleccionadas) {
-          egresoSeleccionados.delete(b.id);
-          card.classList.remove('selected');
-          chk.checked = false;
-        } else {
-          egresoSeleccionados.add(b.id);
-          card.classList.add('selected');
-          chk.checked = true;
-        }
-      });
-      actualizarBotonEgreso();
-    }
-
-    function actualizarBotonEgreso() {
-      const n   = egresoSeleccionados.size;
-      document.getElementById('egresoSelCount').textContent = n;
-      const btn = document.getElementById('btnRegistrarEgreso');
-      btn.disabled       = n === 0;
-      btn.style.opacity  = n === 0 ? '.5' : '1';
-      btn.style.cursor   = n === 0 ? 'not-allowed' : 'pointer';
-    }
-
-    function abrirModalEgreso() {
-      if (egresoSeleccionados.size === 0) return;
-      const n    = egresoSeleccionados.size;
-      const noms = [...egresoSeleccionados]
-        .map(id => botellas.find(b => b.id === id))
-        .filter(Boolean)
-        .map(b => `<strong>${esc(b.nombre_botella)}</strong> (${esc(b.producto)})`)
-        .join(', ');
-      document.getElementById('modalEgresoDesc').innerHTML =
-        `Se registrará el egreso de <strong class="confirm-highlight">${n} botella${n > 1 ? 's' : ''}</strong>:<br>
-         <span style="font-size:.82rem;color:var(--text3);line-height:1.7;">${noms}</span>`;
-      document.getElementById('egresoObsInput').value = '';
-      document.getElementById('modalEgresoConfirm').onclick = ejecutarEgreso;
-      document.getElementById('modalEgreso').classList.add('open');
-      document.getElementById('egresoObsInput').focus();
-    }
-
-    async function ejecutarEgreso() {
-      const obs        = document.getElementById('egresoObsInput').value.trim();
-      const now        = new Date().toISOString();
-      const ids        = [...egresoSeleccionados];
-      const nuevosMovs = [];
-
-      ids.forEach(id => {
-        const botella = botellas.find(b => b.id === id);
-        if (!botella) return;
-        const mov = {
-          id_movimiento: genId(), id_botella: id, fecha_hora: now,
-          estado_anterior: botella.estado_actual, estado_nuevo: 'egresada',
-          ubicacion_anterior: botella.ubicacion_actual, ubicacion_nueva: 'descartada',
-          observacion: obs || 'Egreso de botella vacía'
-        };
-        movimientos.push(mov);
-        nuevosMovs.push(mov);
-        botella.estado_actual    = 'egresada';
-        botella.ubicacion_actual = 'descartada';
-        botella.fecha_ultimo_cambio = now;
-        if (obs) botella.observaciones = obs;
-      });
-
-      closeModal('modalEgreso');
-      toast(`${ids.length} botella${ids.length > 1 ? 's' : ''} egresada${ids.length > 1 ? 's' : ''}`, 'success');
-      renderEgresos();
-      renderDashboard();
-
-      const results = await Promise.all([
-        ...ids.map(id => sb.from('botellas_cocteleria').update({
-          estado_actual: 'egresada', ubicacion_actual: 'descartada',
-          fecha_ultimo_cambio: now, ...(obs ? { observaciones: obs } : {})
-        }).eq('id', id)),
-        sb.from('movimientos_cocteleria').insert(nuevosMovs)
-      ]);
-      const err = results.find(r => r.error)?.error;
-      if (err) {
-        ids.forEach(id => {
-          const botella  = botellas.find(b => b.id === id);
-          const movBackup = nuevosMovs.find(m => m.id_botella === id);
-          if (botella && movBackup) {
-            botella.estado_actual    = movBackup.estado_anterior;
-            botella.ubicacion_actual = movBackup.ubicacion_anterior;
-          }
-        });
-        movimientos = movimientos.filter(m => !nuevosMovs.find(nm => nm.id_movimiento === m.id_movimiento));
-        toast(`Error al registrar egreso: ${err.message}`, 'error');
-        renderEgresos();
-        renderDashboard();
-      }
-    }
-
     // ─── HELPERS ──────────────────────────────────────────────────────────────────
     function refreshCurrentPage() {
       const active = document.querySelector('.page.active');
@@ -2182,7 +1881,6 @@
       const id = active.id.replace('page-', '');
       if (id === 'dashboard') renderDashboard();
       if (id === 'botellas')  { renderProductosFilter(); renderBotellas(); }
-      if (id === 'egresos')   renderEgresos();
       if (id === 'historial') renderHistorial();
     }
 
@@ -2222,7 +1920,6 @@
     document.getElementById('nObs').addEventListener('keydown',           e => { if (e.key === 'Enter') guardarNuevaBotella(); });
     document.getElementById('nProductoOtro').addEventListener('keydown',  e => { if (e.key === 'Enter') document.getElementById('nNombre').focus(); });
     document.getElementById('obsInput').addEventListener('keydown',        e => { if (e.key === 'Enter') document.getElementById('modalObsConfirm').click(); });
-    document.getElementById('egresoObsInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('modalEgresoConfirm').click(); });
 
     // ─── INIT ─────────────────────────────────────────────────────────────────────
     (async () => {
