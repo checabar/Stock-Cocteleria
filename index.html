@@ -4,12 +4,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BARRILES — Stock Manager</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>COCTELERÍA — Stock Manager</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap"
     rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!--
+  ═══════════════════════════════════════════════════════════════════════════
+   SQL PARA CREAR LAS TABLAS EN SUPABASE (ejecutar en el SQL Editor)
+  ═══════════════════════════════════════════════════════════════════════════
+
+  create table botellas_cocteleria (
+    id text primary key,
+    nombre_botella text not null,
+    producto text not null,
+    estado_actual text not null,
+    ubicacion_actual text not null,
+    fecha_ultimo_cambio timestamptz not null,
+    observaciones text default ''
+  );
+
+  create table movimientos_cocteleria (
+    id_movimiento text primary key,
+    id_botella text references botellas_cocteleria(id) on delete cascade,
+    fecha_hora timestamptz not null,
+    estado_anterior text,
+    estado_nuevo text not null,
+    ubicacion_anterior text,
+    ubicacion_nueva text not null,
+    observacion text
+  );
+
+  -- Habilitar realtime en ambas tablas:
+  alter publication supabase_realtime add table botellas_cocteleria;
+  alter publication supabase_realtime add table movimientos_cocteleria;
+
+  ═══════════════════════════════════════════════════════════════════════════
+  -->
 
   <style>
     /* ─── TOKENS ──────────────────────────────────────────────────────────────── */
@@ -31,8 +68,10 @@
       --red-dim: rgba(239, 68, 68, .12);
       --blue: #3b82f6;
       --blue-dim: rgba(59, 130, 246, .12);
+      --purple: #a855f7;
+      --purple-dim: rgba(168, 85, 247, .12);
 
-      --accent: #f59e0b;
+      --accent: #a855f7;
       --radius: 10px;
       --radius-sm: 6px;
       --shadow: 0 4px 24px rgba(0, 0, 0, .4);
@@ -59,7 +98,6 @@
       min-height: 100vh;
       overflow-x: hidden;
     }
-
 
     button {
       cursor: pointer;
@@ -151,7 +189,7 @@
     .nav-item.active {
       color: var(--accent);
       border-left-color: var(--accent);
-      background: rgba(245, 158, 11, .06);
+      background: rgba(168, 85, 247, .07);
     }
 
     .nav-item svg {
@@ -210,9 +248,9 @@
       margin-bottom: 28px;
       border-radius: var(--radius);
       overflow: hidden;
-      background-image: url('Fotos/WhatsApp Image 2026-04-01 at 10.32.29 (1).jpeg');
+      background-image: url('Fotos/WhatsApp Image 2026-04-14 at 20.05.26.jpeg');
       background-size: cover;
-      background-position: center 55%;
+      background-position: center 40%;
     }
 
     .hero-banner::before {
@@ -220,8 +258,8 @@
       position: absolute;
       inset: 0;
       background: linear-gradient(90deg,
-          rgba(11, 13, 17, .85) 0%,
-          rgba(11, 13, 17, .5) 50%,
+          rgba(11, 13, 17, .88) 0%,
+          rgba(11, 13, 17, .55) 55%,
           rgba(11, 13, 17, .2) 100%);
     }
 
@@ -256,6 +294,7 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
+    /* ─── BUTTONS ─────────────────────────────────────────────────────────────── */
     .btn {
       display: inline-flex;
       align-items: center;
@@ -271,11 +310,11 @@
 
     .btn-primary {
       background: var(--accent);
-      color: #000;
+      color: #fff;
     }
 
     .btn-primary:hover {
-      background: #fbbf24;
+      background: #b66ef8;
       transform: translateY(-1px);
     }
 
@@ -346,104 +385,57 @@
       box-shadow: var(--shadow);
     }
 
-    .kpi-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      border-radius: var(--radius) var(--radius) 0 0;
-    }
-
-    .kpi-card.green::before {
-      background: var(--green);
-    }
-
-    .kpi-card.yellow::before {
-      background: var(--yellow);
-    }
-
-    .kpi-card.red::before {
-      background: var(--red);
-    }
-
-    .kpi-card.blue::before {
-      background: var(--blue);
-    }
+    .kpi-card.green  { border-top: 3px solid var(--green); }
+    .kpi-card.yellow { border-top: 3px solid var(--yellow); }
+    .kpi-card.red    { border-top: 3px solid var(--red); }
+    .kpi-card.blue   { border-top: 3px solid var(--blue); }
+    .kpi-card.purple { border-top: 3px solid var(--purple); }
 
     .kpi-icon {
-      font-size: 1.4rem;
-      margin-bottom: 12px;
+      font-size: 1.5rem;
       display: block;
+      margin-bottom: 10px;
     }
 
     .kpi-value {
-      font-size: 2.6rem;
+      font-size: 2.4rem;
       font-weight: 800;
       line-height: 1;
       margin-bottom: 4px;
       font-family: 'JetBrains Mono', monospace;
     }
 
-    .kpi-card.green .kpi-value {
-      color: var(--green);
-    }
-
-    .kpi-card.yellow .kpi-value {
-      color: var(--yellow);
-    }
-
-    .kpi-card.red .kpi-value {
-      color: var(--red);
-    }
-
-    .kpi-card.blue .kpi-value {
-      color: var(--blue);
-    }
+    .kpi-card.green  .kpi-value { color: var(--green); }
+    .kpi-card.yellow .kpi-value { color: var(--yellow); }
+    .kpi-card.red    .kpi-value { color: var(--red); }
+    .kpi-card.blue   .kpi-value { color: var(--blue); }
+    .kpi-card.purple .kpi-value { color: var(--purple); }
 
     .kpi-label {
-      font-size: .78rem;
+      font-size: .75rem;
       color: var(--text2);
-      font-weight: 600;
-      letter-spacing: .5px;
       text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    /* ─── SECTION ─────────────────────────────────────────────────────────────── */
-    .section-title {
-      font-size: .72rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--text3);
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    /* ─── GRID 2 COLS ─────────────────────────────────────────────────────────── */
+    /* ─── DASH GRID ──────────────────────────────────────────────────────────── */
     .dash-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
     }
 
-    @media (max-width: 900px) {
-      .dash-grid {
-        grid-template-columns: 1fr;
-      }
+    .section-title {
+      font-weight: 800;
+      font-size: .82rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text3);
+      margin-bottom: 10px;
     }
 
-    /* ─── TABLE CARD ──────────────────────────────────────────────────────────── */
+    /* ─── CARD ───────────────────────────────────────────────────────────────── */
     .card {
       background: var(--bg2);
       border: 1px solid var(--border);
@@ -451,91 +443,77 @@
       overflow: hidden;
     }
 
-    .card-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
+    /* ─── FILTER BAR ─────────────────────────────────────────────────────────── */
+    .filter-bar {
       display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
       align-items: center;
-      justify-content: space-between;
-      font-weight: 700;
-      font-size: .88rem;
+      margin-bottom: 16px;
     }
 
-    .card-body {
-      padding: 0;
+    .filter-bar input,
+    .filter-bar select {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 7px 12px;
+      font-size: .82rem;
     }
 
-    /* ─── TABLES ──────────────────────────────────────────────────────────────── */
+    .filter-bar input { min-width: 200px; }
+
+    .filter-bar select {
+      cursor: pointer;
+    }
+
+    .filter-bar input:focus,
+    .filter-bar select:focus {
+      border-color: var(--accent);
+    }
+
+    /* ─── TABLE ──────────────────────────────────────────────────────────────── */
     .tbl {
       width: 100%;
       border-collapse: collapse;
+      font-size: .84rem;
     }
 
     .tbl th {
       text-align: left;
-      padding: 10px 16px;
-      font-size: .7rem;
-      letter-spacing: 1.5px;
+      padding: 12px 16px;
+      font-size: .72rem;
       text-transform: uppercase;
+      letter-spacing: 1px;
       color: var(--text3);
-      background: var(--bg3);
-      font-weight: 700;
       border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+      font-family: 'JetBrains Mono', monospace;
       white-space: nowrap;
     }
 
     .tbl td {
-      padding: 11px 16px;
-      font-size: .84rem;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
 
-    .tbl tr:last-child td {
-      border-bottom: none;
-    }
+    .tbl tbody tr:last-child td { border-bottom: none; }
 
-    .tbl tbody tr:hover {
-      background: rgba(255, 255, 255, .02);
-    }
+    .tbl tbody tr:hover { background: rgba(255, 255, 255, .02); }
 
-    .tbl .mono {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: .8rem;
-    }
-
-    /* ─── BADGE ───────────────────────────────────────────────────────────────── */
+    /* ─── BADGES ─────────────────────────────────────────────────────────────── */
     .badge {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 4px 10px;
+      padding: 3px 9px;
       border-radius: 20px;
-      font-size: .72rem;
+      font-size: .74rem;
       font-weight: 700;
-      letter-spacing: .5px;
-      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
       white-space: nowrap;
-    }
-
-    .badge-green {
-      background: var(--green-dim);
-      color: var(--green);
-    }
-
-    .badge-yellow {
-      background: var(--yellow-dim);
-      color: var(--yellow);
-    }
-
-    .badge-red {
-      background: var(--red-dim);
-      color: var(--red);
-    }
-
-    .badge-blue {
-      background: var(--blue-dim);
-      color: var(--blue);
     }
 
     .badge-dot {
@@ -545,40 +523,39 @@
       background: currentColor;
     }
 
-    /* ─── FILTERS BAR ─────────────────────────────────────────────────────────── */
-    .filter-bar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-      align-items: center;
+    .badge-green  { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(34,197,94,.2); }
+    .badge-yellow { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(245,158,11,.2); }
+    .badge-red    { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(239,68,68,.2); }
+    .badge-blue   { background: var(--blue-dim);   color: var(--blue);   border: 1px solid rgba(59,130,246,.2); }
+    .badge-gray   { background: rgba(148,163,184,.12); color: #94a3b8; border: 1px solid rgba(148,163,184,.2); }
+
+    /* ─── FORM ───────────────────────────────────────────────────────────────── */
+    .form-row { margin-bottom: 14px; }
+
+    .form-label {
+      display: block;
+      font-size: .76rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text3);
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    .filter-bar input,
-    .filter-bar select {
-      background: var(--bg2);
+    .form-input {
+      width: 100%;
+      background: var(--bg3);
       border: 1px solid var(--border2);
-      color: var(--text);
       border-radius: var(--radius-sm);
-      padding: 8px 12px;
-      font-size: .82rem;
-      transition: border .15s;
+      color: var(--text);
+      padding: 9px 12px;
+      font-size: .86rem;
+      transition: border-color .15s;
     }
 
-    .filter-bar input:focus,
-    .filter-bar select:focus {
-      border-color: var(--accent);
-    }
+    .form-input:focus { border-color: var(--accent); }
 
-    .filter-bar input {
-      min-width: 180px;
-    }
-
-    .filter-bar select option {
-      background: var(--bg2);
-    }
-
-    /* ─── ACTION BUTTONS ──────────────────────────────────────────────────────── */
+    /* ─── ACTION BUTTONS ─────────────────────────────────────────────────────── */
     .action-btns {
       display: flex;
       gap: 5px;
@@ -586,80 +563,35 @@
     }
 
     .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       padding: 5px 10px;
       border-radius: var(--radius-sm);
-      font-size: .7rem;
+      font-size: .74rem;
       font-weight: 700;
-      font-family: 'Syne', sans-serif;
       border: 1px solid transparent;
       transition: all .15s;
       white-space: nowrap;
+      font-family: 'Syne', sans-serif;
     }
 
-    .action-btn:hover {
-      transform: translateY(-1px);
-    }
+    .action-btn:hover { transform: translateY(-1px); }
 
-    .ab-green {
-      background: var(--green-dim);
-      color: var(--green);
-      border-color: rgba(34, 197, 94, .25);
-    }
+    .ab-green     { background: var(--green-dim);  color: var(--green);  border-color: rgba(34,197,94,.25); }
+    .ab-green:hover { background: rgba(34,197,94,.22); }
 
-    .ab-green:hover {
-      background: rgba(34, 197, 94, .22);
-    }
+    .ab-yellow    { background: var(--yellow-dim); color: #fbbf24; border-color: rgba(245,158,11,.25); }
+    .ab-yellow:hover { background: rgba(245,158,11,.22); }
 
-    .ab-yellow-up {
-      background: rgba(245, 158, 11, .12);
-      color: #fbbf24;
-      border-color: rgba(245, 158, 11, .25);
-    }
+    .ab-red       { background: var(--red-dim);    color: var(--red);  border-color: rgba(239,68,68,.25); }
+    .ab-red:hover { background: rgba(239,68,68,.22); }
 
-    .ab-yellow-up:hover {
-      background: rgba(245, 158, 11, .22);
-    }
+    .ab-blue      { background: var(--blue-dim);   color: var(--blue); border-color: rgba(59,130,246,.25); }
+    .ab-blue:hover { background: rgba(59,130,246,.22); }
 
-    .ab-yellow-dn {
-      background: rgba(234, 179, 8, .12);
-      color: #eab308;
-      border-color: rgba(234, 179, 8, .25);
-    }
-
-    .ab-yellow-dn:hover {
-      background: rgba(234, 179, 8, .22);
-    }
-
-    .ab-red {
-      background: var(--red-dim);
-      color: var(--red);
-      border-color: rgba(239, 68, 68, .25);
-    }
-
-    .ab-red:hover {
-      background: rgba(239, 68, 68, .22);
-    }
-
-    .ab-del {
-      background: rgba(100, 100, 120, .1);
-      color: var(--text3);
-      border-color: rgba(100, 100, 120, .2);
-    }
-
-    .ab-del:hover {
-      background: rgba(239, 68, 68, .12);
-      color: var(--red);
-    }
-
-    .ab-blue {
-      background: var(--blue-dim);
-      color: var(--blue);
-      border-color: rgba(59, 130, 246, .25);
-    }
-
-    .ab-blue:hover {
-      background: rgba(59, 130, 246, .22);
-    }
+    .ab-del       { background: rgba(100,100,120,.1); color: var(--text3); border-color: rgba(100,100,120,.2); }
+    .ab-del:hover { background: rgba(239,68,68,.12); color: var(--red); }
 
     /* ─── HISTORIAL ───────────────────────────────────────────────────────────── */
     .mov-item {
@@ -672,13 +604,8 @@
       transition: background .1s;
     }
 
-    .mov-item:hover {
-      background: rgba(255, 255, 255, .02);
-    }
-
-    .mov-item:last-child {
-      border-bottom: none;
-    }
+    .mov-item:hover { background: rgba(255,255,255,.02); }
+    .mov-item:last-child { border-bottom: none; }
 
     .mov-icon {
       width: 36px;
@@ -691,11 +618,9 @@
       flex-shrink: 0;
     }
 
-    .mov-info {
-      overflow: hidden;
-    }
+    .mov-info { overflow: hidden; }
 
-    .mov-barril {
+    .mov-botella {
       font-weight: 700;
       font-size: .88rem;
       margin-bottom: 2px;
@@ -728,7 +653,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, .7);
+      background: rgba(0,0,0,.7);
       z-index: 200;
       align-items: center;
       justify-content: center;
@@ -736,9 +661,7 @@
       backdrop-filter: blur(4px);
     }
 
-    .modal-bg.open {
-      display: flex;
-    }
+    .modal-bg.open { display: flex; }
 
     .modal {
       background: var(--bg2);
@@ -746,20 +669,13 @@
       border-radius: 14px;
       width: 100%;
       max-width: 460px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, .6);
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
       animation: modalIn .2s ease;
     }
 
     @keyframes modalIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px) scale(.97);
-      }
-
-      to {
-        opacity: 1;
-        transform: none;
-      }
+      from { opacity: 0; transform: translateY(20px) scale(.97); }
+      to   { opacity: 1; transform: none; }
     }
 
     .modal-header {
@@ -770,10 +686,7 @@
       justify-content: space-between;
     }
 
-    .modal-header h3 {
-      font-size: 1rem;
-      font-weight: 800;
-    }
+    .modal-header h3 { font-size: 1rem; font-weight: 800; }
 
     .modal-close {
       background: none;
@@ -784,294 +697,89 @@
       transition: color .1s;
     }
 
-    .modal-close:hover {
-      color: var(--text);
-    }
+    .modal-close:hover { color: var(--text); }
 
-    .modal-body {
-      padding: 20px 24px;
-    }
+    .modal-body { padding: 20px 24px; }
 
     .modal-footer {
-      padding: 16px 24px;
+      padding: 14px 24px;
       border-top: 1px solid var(--border);
       display: flex;
-      gap: 10px;
       justify-content: flex-end;
+      gap: 10px;
     }
 
-    /* FORM */
-    .form-row {
-      margin-bottom: 16px;
-    }
-
-    .form-label {
-      display: block;
-      font-size: .75rem;
-      font-weight: 700;
-      color: var(--text2);
-      letter-spacing: .8px;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-
-    .form-input {
-      width: 100%;
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      color: var(--text);
-      border-radius: var(--radius-sm);
-      padding: 10px 14px;
-      font-size: .88rem;
-      transition: border .15s;
-    }
-
-    .form-input:focus {
-      border-color: var(--accent);
-    }
-
-    .form-input::placeholder {
-      color: var(--text3);
-    }
-
-    /* ─── TOAST ───────────────────────────────────────────────────────────────── */
+    /* ─── TOAST ──────────────────────────────────────────────────────────────── */
     .toast-container {
       position: fixed;
       bottom: 24px;
       right: 24px;
-      z-index: 999;
+      z-index: 500;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      pointer-events: none;
     }
 
     .toast {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 11px 16px;
       background: var(--bg3);
       border: 1px solid var(--border2);
       border-radius: var(--radius-sm);
-      padding: 12px 18px;
       font-size: .82rem;
       font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 220px;
-      animation: toastIn .25s ease;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, .4);
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+      animation: toastIn .2s ease, toastOut .3s ease 2.7s forwards;
+      max-width: 320px;
     }
 
-    @keyframes toastIn {
-      from {
-        opacity: 0;
-        transform: translateX(20px);
-      }
+    @keyframes toastIn  { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: none; } }
+    @keyframes toastOut { from { opacity:1; } to { opacity:0; transform: translateY(10px); } }
 
-      to {
-        opacity: 1;
-        transform: none;
-      }
-    }
+    .toast-success { border-left: 3px solid var(--green); }
+    .toast-error   { border-left: 3px solid var(--red); }
+    .toast-info    { border-left: 3px solid var(--blue); }
 
-    .toast-success {
-      border-left: 3px solid var(--green);
-    }
-
-    .toast-error {
-      border-left: 3px solid var(--red);
-    }
-
-    .toast-info {
-      border-left: 3px solid var(--blue);
-    }
-
-    /* ─── EMPTY STATE ─────────────────────────────────────────────────────────── */
+    /* ─── EMPTY STATE ────────────────────────────────────────────────────────── */
     .empty-state {
       text-align: center;
       padding: 40px 20px;
       color: var(--text3);
     }
 
-    .empty-state .big {
-      font-size: 2.5rem;
-      margin-bottom: 12px;
-    }
+    .empty-state .big { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p    { font-size: .88rem; }
 
-    .empty-state p {
-      font-size: .88rem;
-    }
+    /* ─── SCROLLBAR ──────────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar      { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
-    /* ─── SCROLLBAR ───────────────────────────────────────────────────────────── */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--border2);
-      border-radius: 3px;
-    }
-
-    /* ─── RESPONSIVE ──────────────────────────────────────────────────────────── */
-    @media (max-width: 768px) {
-      .sidebar {
-        transform: translateX(-100%);
-        width: 240px;
-      }
-
-      .sidebar.open {
-        transform: translateX(0);
-      }
-
-      .sidebar-overlay.open {
-        display: block;
-      }
-
-      .main {
-        margin-left: 0;
-      }
-
-      .hamburger {
-        display: block;
-      }
-
-      .page {
-        padding: 16px;
-      }
-
-      .kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .kpi-value {
-        font-size: 2rem;
-      }
-
-      .hero-banner {
-        height: 110px;
-        margin-bottom: 20px;
-      }
-
-      .hero-title {
-        font-size: 1.3rem;
-      }
-
-      .topbar {
-        padding: 0 16px;
-      }
-
-      .action-btns {
-        display: none;
-      }
-
-      .mobile-actions {
-        display: block !important;
-      }
-
-      .tbl th:nth-child(4),
-      .tbl td:nth-child(4) {
-        display: none;
-      }
-
-      .dash-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Historial page scroll */
-    .hist-scroll {
-      max-height: 600px;
-      overflow-y: auto;
-    }
-
-    .table-scroll {
-      overflow-x: auto;
-    }
-
-    /* Mobile action dropdown */
-    .mobile-actions {
-      display: none;
-      position: relative;
-    }
-
-    .mobile-actions-menu {
-      position: absolute;
-      right: 0;
-      top: calc(100% + 4px);
-      background: var(--bg3);
-      border: 1px solid var(--border2);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-      z-index: 50;
-      min-width: 180px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
-      display: none;
-    }
-
-    .mobile-actions-menu.open {
-      display: block;
-    }
-
-    .mobile-menu-item {
-      display: block;
-      width: 100%;
-      padding: 11px 16px;
-      text-align: left;
-      font-size: .82rem;
-      font-weight: 600;
-      color: var(--text2);
-      background: none;
-      border: none;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      transition: background .1s;
-      font-family: 'Syne', sans-serif;
-    }
-
-    .mobile-menu-item:last-child {
-      border-bottom: none;
-    }
-
-    .mobile-menu-item:hover {
-      background: rgba(255, 255, 255, .05);
-      color: var(--text);
-    }
-
-    /* Confirm dialog override */
-    .confirm-highlight {
-      color: var(--accent);
-      font-weight: 700;
-    }
-
-    /* Style pill */
-    .style-pill {
+    /* ─── PRODUCTOS PILL ─────────────────────────────────────────────────────── */
+    .producto-pill {
       display: inline-block;
       padding: 3px 9px;
-      background: var(--bg3);
-      border: 1px solid var(--border2);
+      background: var(--purple-dim);
+      border: 1px solid rgba(168,85,247,.25);
       border-radius: 20px;
       font-size: .74rem;
       font-family: 'JetBrains Mono', monospace;
-      color: var(--text2);
-      max-width: 130px;
+      color: var(--purple);
+      max-width: 150px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    /* Number barril highlight */
-    .num-barril {
+    .num-botella {
       font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
       font-size: .88rem;
       color: var(--text);
     }
 
-    /* Obs cell */
     .obs-cell {
       max-width: 120px;
       overflow: hidden;
@@ -1082,8 +790,8 @@
       font-style: italic;
     }
 
-    /* Resumen por estilo */
-    .estilo-row {
+    /* ─── RESUMEN POR PRODUCTO ───────────────────────────────────────────────── */
+    .producto-row {
       display: flex;
       align-items: center;
       gap: 12px;
@@ -1091,23 +799,21 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .estilo-row:last-child {
-      border-bottom: none;
-    }
+    .producto-row:last-child { border-bottom: none; }
 
-    .estilo-name {
+    .producto-name {
       flex: 1;
       font-weight: 600;
       font-size: .86rem;
     }
 
-    .estilo-pills {
+    .producto-pills {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
     }
 
-    .epill {
+    .ppill {
       padding: 2px 8px;
       border-radius: 20px;
       font-size: .7rem;
@@ -1115,22 +821,11 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
-    .ep-g {
-      background: var(--green-dim);
-      color: var(--green);
-    }
+    .pp-g { background: var(--green-dim);  color: var(--green);  }
+    .pp-y { background: var(--yellow-dim); color: var(--yellow); }
+    .pp-r { background: var(--red-dim);    color: var(--red);    }
 
-    .ep-y {
-      background: var(--yellow-dim);
-      color: var(--yellow);
-    }
-
-    .ep-r {
-      background: var(--red-dim);
-      color: var(--red);
-    }
-
-    .estilo-total {
+    .producto-total {
       font-family: 'JetBrains Mono', monospace;
       font-weight: 700;
       color: var(--text2);
@@ -1139,43 +834,7 @@
       text-align: right;
     }
 
-    /* Barril detail modal historial */
-    .detail-hist-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: .8rem;
-    }
-
-    .detail-hist-item:last-child {
-      border-bottom: none;
-    }
-
-    .dhi-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-top: 5px;
-      flex-shrink: 0;
-    }
-
-    .dhi-info {
-      flex: 1;
-    }
-
-    .dhi-cambio {
-      font-weight: 700;
-    }
-
-    .dhi-time {
-      color: var(--text3);
-      font-size: .72rem;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    /* ─── EGRESO CHECKBOX GRID ────────────────────────────────────────────────── */
+    /* ─── EGRESO CHECKBOX GRID ───────────────────────────────────────────────── */
     .egreso-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -1196,13 +855,11 @@
       user-select: none;
     }
 
-    .egreso-card:hover {
-      border-color: var(--text3);
-    }
+    .egreso-card:hover { border-color: var(--text3); }
 
     .egreso-card.selected {
       border-color: var(--accent);
-      background: rgba(245, 158, 11, .06);
+      background: rgba(168,85,247,.06);
     }
 
     .egreso-card input[type=checkbox] {
@@ -1213,10 +870,7 @@
       cursor: pointer;
     }
 
-    .egreso-card-info {
-      flex: 1;
-      overflow: hidden;
-    }
+    .egreso-card-info { flex: 1; overflow: hidden; }
 
     .egreso-card-num {
       font-weight: 700;
@@ -1224,7 +878,7 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
-    .egreso-card-estilo {
+    .egreso-card-producto {
       font-size: .76rem;
       color: var(--text2);
       white-space: nowrap;
@@ -1236,11 +890,6 @@
       font-size: .7rem;
       color: var(--text3);
       font-family: 'JetBrains Mono', monospace;
-    }
-
-    .badge-gray {
-      background: rgba(148, 163, 184, .12);
-      color: #94a3b8;
     }
 
     .egreso-toolbar {
@@ -1269,7 +918,35 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Pagination / load more */
+    /* ─── DETALLE MODAL ──────────────────────────────────────────────────────── */
+    .detail-hist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .8rem;
+    }
+
+    .detail-hist-item:last-child { border-bottom: none; }
+
+    .dhi-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .dhi-info  { flex: 1; }
+    .dhi-cambio { font-weight: 700; }
+    .dhi-time {
+      color: var(--text3);
+      font-size: .72rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ─── LOAD MORE ──────────────────────────────────────────────────────────── */
     .load-more-btn {
       display: block;
       width: 100%;
@@ -1286,10 +963,70 @@
       font-family: 'Syne', sans-serif;
     }
 
-    .load-more-btn:hover {
-      background: rgba(255, 255, 255, .04);
-      color: var(--text);
+    .load-more-btn:hover { background: rgba(255,255,255,.04); color: var(--text); }
+
+    /* ─── CONFIRM HIGHLIGHT ──────────────────────────────────────────────────── */
+    .confirm-highlight { color: var(--accent); font-weight: 700; }
+
+    /* ─── MOBILE ACTIONS ─────────────────────────────────────────────────────── */
+    .mobile-actions { display: none; position: relative; }
+
+    .mobile-actions-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      z-index: 50;
+      min-width: 200px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+      display: none;
     }
+
+    .mobile-actions-menu.open { display: block; }
+
+    .mobile-menu-item {
+      display: block;
+      width: 100%;
+      padding: 11px 16px;
+      text-align: left;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--text2);
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background .1s;
+      font-family: 'Syne', sans-serif;
+    }
+
+    .mobile-menu-item:last-child { border-bottom: none; }
+    .mobile-menu-item:hover { background: rgba(255,255,255,.05); color: var(--text); }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); width: 240px; }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+      .main { margin-left: 0; }
+      .hamburger { display: block; }
+      .page { padding: 16px; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .kpi-value { font-size: 2rem; }
+      .hero-banner { height: 110px; margin-bottom: 20px; }
+      .hero-title  { font-size: 1.3rem; }
+      .topbar      { padding: 0 16px; }
+      .action-btns { display: none; }
+      .mobile-actions { display: block !important; }
+      .tbl th:nth-child(4), .tbl td:nth-child(4) { display: none; }
+      .dash-grid { grid-template-columns: 1fr; }
+    }
+
+    .hist-scroll   { max-height: 600px; overflow-y: auto; }
+    .table-scroll  { overflow-x: auto; }
   </style>
 </head>
 
@@ -1299,43 +1036,42 @@
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <div class="brand">🍺 BARRILES</div>
+      <div class="brand">🍸 COCTELERÍA</div>
       <div class="brand-sub">Stock Manager v1.0</div>
     </div>
     <nav class="nav">
       <div class="nav-item active" data-page="dashboard">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7" />
-          <rect x="14" y="3" width="7" height="7" />
-          <rect x="14" y="14" width="7" height="7" />
-          <rect x="3" y="14" width="7" height="7" />
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
         </svg>
         Dashboard
       </div>
-      <div class="nav-item" data-page="barriles">
+      <div class="nav-item" data-page="botellas">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <ellipse cx="12" cy="5" rx="9" ry="3" />
-          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+          <path d="M8 2h8M9 2v3.5c0 1.5-2 2.5-2 5v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9c0-2.5-2-3.5-2-5V2"/>
+          <line x1="7" y1="13" x2="17" y2="13"/>
         </svg>
-        Barriles
+        Botellas
       </div>
       <div class="nav-item" data-page="egresos">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 14l-4-4 4-4" />
-          <path d="M5 10h11a4 4 0 0 1 0 8h-1" />
+          <path d="M9 14l-4-4 4-4"/>
+          <path d="M5 10h11a4 4 0 0 1 0 8h-1"/>
         </svg>
         Egresos
       </div>
       <div class="nav-item" data-page="historial">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 8v4l3 3" />
-          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8v4l3 3"/>
+          <circle cx="12" cy="12" r="9"/>
         </svg>
         Historial
       </div>
     </nav>
-    <div class="sidebar-footer">50L por barril · localStorage</div>
+    <div class="sidebar-footer">Coctelería · Supabase sync</div>
   </aside>
 
   <!-- ═══════════════════════════════════════════════════════════ MAIN -->
@@ -1344,9 +1080,9 @@
       <div style="display:flex;align-items:center;gap:12px;">
         <button class="hamburger" id="hamburger" aria-label="Menú">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6"  x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
         <span class="topbar-title" id="topbarTitle">Dashboard</span>
@@ -1354,9 +1090,9 @@
       <div class="topbar-right">
         <button class="btn btn-primary" onclick="openModalNuevo()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M12 5v14M5 12h14" />
+            <path d="M12 5v14M5 12h14"/>
           </svg>
-          Nuevo Barril
+          Nueva Botella
         </button>
       </div>
     </header>
@@ -1366,22 +1102,20 @@
 
       <div class="hero-banner">
         <div class="hero-content">
-          <div class="hero-title">CERVECERÍA <span>CHECA</span></div>
-          <div class="hero-sub">Control de Stock</div>
+          <div class="hero-title">COCTELERÍA <span>BAR</span></div>
+          <div class="hero-sub">Control de Stock · Botellas</div>
         </div>
       </div>
 
       <div class="kpi-grid" id="kpiGrid"></div>
 
       <div class="dash-grid">
-        <!-- Resumen por estilo -->
         <div>
-          <div class="section-title">Resumen por estilo</div>
+          <div class="section-title">Resumen por producto</div>
           <div class="card">
-            <div id="estiloResumen"></div>
+            <div id="productoResumen"></div>
           </div>
         </div>
-        <!-- Últimos movimientos -->
         <div>
           <div class="section-title">Últimos movimientos</div>
           <div class="card">
@@ -1391,19 +1125,18 @@
       </div>
     </div>
 
-    <!-- ─── PAGE: BARRILES ─── -->
-    <div class="page" id="page-barriles">
+    <!-- ─── PAGE: BOTELLAS ─── -->
+    <div class="page" id="page-botellas">
       <div class="filter-bar">
-        <input type="text" id="searchBarril" placeholder="Buscar nº barril..." oninput="renderBarriles()">
-        <select id="filterEstado" onchange="renderBarriles()">
+        <input type="text" id="searchBotella" placeholder="Buscar botella..." oninput="renderBotellas()">
+        <select id="filterEstado" onchange="renderBotellas()">
           <option value="">Todos los estados</option>
-          <option value="lleno_stock">Llenos</option>
-          <option value="pinchado_barra_arriba">Pinchado barra arriba</option>
-          <option value="pinchado_barra_abajo">Pinchado barra abajo</option>
-          <option value="vacio">Vacíos</option>
+          <option value="cerrada_stock">Cerradas (Stock)</option>
+          <option value="abierta_barra">Abiertas en Barra</option>
+          <option value="vacia">Vacías</option>
         </select>
-        <select id="filterEstilo" onchange="renderBarriles()">
-          <option value="">Todos los estilos</option>
+        <select id="filterProducto" onchange="renderBotellas()">
+          <option value="">Todos los productos</option>
         </select>
         <span id="countLabel"
           style="font-size:.78rem;color:var(--text3);margin-left:auto;font-family:'JetBrains Mono',monospace;"></span>
@@ -1413,8 +1146,9 @@
           <table class="tbl">
             <thead>
               <tr>
-                <th>Nº Barril</th>
-                <th>Estilo</th>
+                <th>#</th>
+                <th>Producto</th>
+                <th>Marca</th>
                 <th>Estado</th>
                 <th>Ubicación</th>
                 <th>Último cambio</th>
@@ -1422,44 +1156,42 @@
                 <th>Acciones</th>
               </tr>
             </thead>
-            <tbody id="barrilesBody"></tbody>
+            <tbody id="botellasBody"></tbody>
           </table>
         </div>
-        <div id="barrilesEmpty" class="empty-state" style="display:none;">
-          <div class="big">🍺</div>
-          <p>No hay barriles que coincidan con los filtros.</p>
+        <div id="botellasEmpty" class="empty-state" style="display:none;">
+          <div class="big">🍾</div>
+          <p>No hay botellas que coincidan con los filtros.</p>
         </div>
       </div>
     </div>
 
     <!-- ─── PAGE: EGRESOS ─── -->
     <div class="page" id="page-egresos">
-      <!-- Barriles vacíos para egresar -->
-      <div class="section-title" style="margin-bottom:14px;">Barriles vacíos — pendientes de devolución</div>
+      <div class="section-title" style="margin-bottom:14px;">Botellas vacías — pendientes de egreso</div>
       <div class="card" style="margin-bottom:28px;">
         <div class="egreso-toolbar">
           <div class="egreso-toolbar-left">
-            <span id="egresoSelLabel"><span class="egreso-sel-count" id="egresoSelCount">0</span> seleccionados</span>
-            <button class="btn btn-ghost btn-sm" onclick="toggleSelTodos()">Sel. todos</button>
+            <span id="egresoSelLabel"><span class="egreso-sel-count" id="egresoSelCount">0</span> seleccionadas</span>
+            <button class="btn btn-ghost btn-sm" onclick="toggleSelTodos()">Sel. todas</button>
           </div>
           <button class="btn btn-primary" id="btnRegistrarEgreso" onclick="abrirModalEgreso()" disabled
             style="opacity:.5;cursor:not-allowed;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M9 14l-4-4 4-4" />
-              <path d="M5 10h11a4 4 0 0 1 0 8h-1" />
+              <path d="M9 14l-4-4 4-4"/>
+              <path d="M5 10h11a4 4 0 0 1 0 8h-1"/>
             </svg>
-            Registrar Devolución
+            Registrar Egreso
           </button>
         </div>
         <div id="egresoGrid" class="egreso-grid"></div>
         <div id="egresoVacioEmpty" class="empty-state" style="display:none;">
           <div class="big">✅</div>
-          <p>No hay barriles vacíos pendientes de devolución.</p>
+          <p>No hay botellas vacías pendientes de egreso.</p>
         </div>
       </div>
 
-      <!-- Historial de egresos -->
-      <div class="section-title" style="margin-bottom:14px;">Historial de devoluciones</div>
+      <div class="section-title" style="margin-bottom:14px;">Historial de egresos</div>
       <div class="card">
         <div id="egresoHistList" class="hist-scroll"></div>
       </div>
@@ -1468,13 +1200,13 @@
     <!-- ─── PAGE: HISTORIAL ─── -->
     <div class="page" id="page-historial">
       <div class="filter-bar">
-        <input type="text" id="searchHistBarril" placeholder="Filtrar por nº barril..." oninput="renderHistorial()">
+        <input type="text" id="searchHistBotella" placeholder="Filtrar por botella..." oninput="renderHistorial()">
         <select id="filterHistEstado" onchange="renderHistorial()">
           <option value="">Todos los estados</option>
-          <option value="lleno_stock">→ Lleno</option>
-          <option value="pinchado_barra_arriba">→ Pinchado arriba</option>
-          <option value="pinchado_barra_abajo">→ Pinchado abajo</option>
-          <option value="vacio">→ Vacío</option>
+          <option value="cerrada_stock">→ Cerrada</option>
+          <option value="abierta_barra">→ Abierta en Barra</option>
+          <option value="vacia">→ Vacía</option>
+          <option value="egresada">→ Egresada</option>
         </select>
       </div>
       <div class="card">
@@ -1483,47 +1215,64 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════ MODAL NUEVO BARRIL -->
+  <!-- ═══════════════════════════════════════════════════════════ MODAL NUEVA BOTELLA -->
   <div class="modal-bg" id="modalNuevo">
     <div class="modal">
       <div class="modal-header">
-        <h3>➕ Nuevo Barril</h3>
+        <h3>➕ Nueva Botella</h3>
         <button class="modal-close" onclick="closeModal('modalNuevo')">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
-          <label class="form-label">Número de barril *</label>
-          <input class="form-input" id="nNúmero" type="text" placeholder="ej: 42">
-        </div>
-        <div class="form-row">
-          <label class="form-label">Estilo de cerveza *</label>
-          <select class="form-input" id="nEstilo" onchange="toggleEstiloOtro()">
-            <option value="">— Seleccioná un estilo —</option>
-            <option value="Praha">Praha</option>
-            <option value="Ryle Pale">Ryle Pale</option>
-            <option value="King Bee">King Bee</option>
-            <option value="Mesopotamia">Mesopotamia</option>
-            <option value="Silesia">Silesia</option>
-            <option value="Good Devil">Good Devil</option>
-            <option value="Hellfish">Hellfish</option>
-            <option value="Hodgson">Hodgson</option>
-            <option value="Moravia">Moravia</option>
-            <option value="Cotton Field">Cotton Field</option>
-            <option value="Street Rules">Street Rules</option>
+          <label class="form-label">Producto *</label>
+          <select class="form-input" id="nProducto" onchange="toggleProductoOtro()">
+            <option value="">— Seleccioná un producto —</option>
+            <option value="Fernet">Fernet</option>
+            <option value="Aperol">Aperol</option>
+            <option value="Campari">Campari</option>
+            <option value="Gin">Gin</option>
+            <option value="Vodka">Vodka</option>
+            <option value="Whisky">Whisky</option>
+            <option value="Ron">Ron</option>
+            <option value="Tequila">Tequila</option>
+            <option value="Amaretto">Amaretto</option>
+            <option value="Triple Sec">Triple Sec</option>
+            <option value="Kahlúa">Kahlúa</option>
+            <option value="Vermouth Rojo">Vermouth Rojo</option>
+            <option value="Vermouth Blanco">Vermouth Blanco</option>
+            <option value="Bitter">Bitter</option>
+            <option value="Licor">Licor</option>
+            <option value="Champagne">Champagne</option>
+            <option value="Vino Blanco">Vino Blanco</option>
+            <option value="Vino Tinto">Vino Tinto</option>
+            <option value="Cerveza">Cerveza</option>
+            <option value="Gaseosa / Soda">Gaseosa / Soda</option>
+            <option value="Jugo">Jugo</option>
             <option value="__otro__">Otro...</option>
           </select>
         </div>
-        <div class="form-row" id="rowEstiloOtro" style="display:none;">
-          <label class="form-label">Nombre del estilo *</label>
-          <input class="form-input" id="nEstiloOtro" type="text" placeholder="Escribí el nombre del estilo">
+        <div class="form-row" id="rowProductoOtro" style="display:none;">
+          <label class="form-label">Nombre del producto *</label>
+          <input class="form-input" id="nProductoOtro" type="text" placeholder="Escribí el nombre del producto">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Marca *</label>
+          <input class="form-input" id="nMarca" type="text" placeholder="ej: Branca, Bols, Johnnie Walker...">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Cantidad</label>
+          <input class="form-input" id="nCantidad" type="number" min="1" max="99" value="1"
+            style="width:100px;">
+          <span style="font-size:.76rem;color:var(--text3);margin-top:4px;display:block;">
+            Se crean N botellas con IDs automáticos (#1, #2…)
+          </span>
         </div>
         <div class="form-row">
           <label class="form-label">Estado inicial</label>
           <select class="form-input" id="nEstado">
-            <option value="lleno_stock">Lleno (en stock)</option>
-            <option value="pinchado_barra_arriba">Pinchado barra arriba</option>
-            <option value="pinchado_barra_abajo">Pinchado barra abajo</option>
-            <option value="vacio">Vacío</option>
+            <option value="cerrada_stock">Cerrada (en stock)</option>
+            <option value="abierta_barra">Abierta en barra</option>
+            <option value="vacia">Vacía</option>
           </select>
         </div>
         <div class="form-row">
@@ -1533,12 +1282,12 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('modalNuevo')">Cancelar</button>
-        <button class="btn btn-primary" onclick="guardarNuevoBarril()">Agregar Barril</button>
+        <button class="btn btn-primary" onclick="guardarNuevaBotella()">Agregar Botella</button>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════ MODAL OBSERVACION -->
+  <!-- ═══════════════════════════════════════════════════════════ MODAL CAMBIO DE ESTADO -->
   <div class="modal-bg" id="modalObs">
     <div class="modal">
       <div class="modal-header">
@@ -1549,7 +1298,7 @@
         <div id="modalObsDesc" style="color:var(--text2);font-size:.88rem;margin-bottom:16px;"></div>
         <div class="form-row">
           <label class="form-label">Observación (opcional)</label>
-          <input class="form-input" id="obsInput" type="text" placeholder="ej: barril dañado, cambio de turno...">
+          <input class="form-input" id="obsInput" type="text" placeholder="ej: botella abierta para servicio, cambio de turno...">
         </div>
       </div>
       <div class="modal-footer">
@@ -1563,7 +1312,7 @@
   <div class="modal-bg" id="modalEgreso">
     <div class="modal">
       <div class="modal-header">
-        <h3>↩️ Registrar Devolución</h3>
+        <h3>🗑️ Registrar Egreso</h3>
         <button class="modal-close" onclick="closeModal('modalEgreso')">✕</button>
       </div>
       <div class="modal-body">
@@ -1571,21 +1320,21 @@
         <div class="form-row">
           <label class="form-label">Observación (opcional)</label>
           <input class="form-input" id="egresoObsInput" type="text"
-            placeholder="ej: devolución semanal, proveedor Fulano...">
+            placeholder="ej: fin de semana, evento especial...">
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('modalEgreso')">Cancelar</button>
-        <button class="btn btn-primary" id="modalEgresoConfirm">Confirmar Devolución</button>
+        <button class="btn btn-primary" id="modalEgresoConfirm">Confirmar Egreso</button>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════ MODAL DETALLE BARRIL -->
+  <!-- ═══════════════════════════════════════════════════════════ MODAL DETALLE BOTELLA -->
   <div class="modal-bg" id="modalDetalle">
     <div class="modal" style="max-width:520px;">
       <div class="modal-header">
-        <h3 id="modalDetTitle">Barril #XX</h3>
+        <h3 id="modalDetTitle">Botella</h3>
         <button class="modal-close" onclick="closeModal('modalDetalle')">✕</button>
       </div>
       <div class="modal-body" id="modalDetBody"></div>
@@ -1595,42 +1344,51 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════ MODAL EDITAR BARRIL -->
+  <!-- ═══════════════════════════════════════════════════════════ MODAL EDITAR BOTELLA -->
   <div class="modal-bg" id="modalEditar">
     <div class="modal">
       <div class="modal-header">
-        <h3>✏️ Editar Barril</h3>
+        <h3>✏️ Editar Botella</h3>
         <button class="modal-close" onclick="closeModal('modalEditar')">✕</button>
       </div>
       <div class="modal-body">
         <div class="form-row">
-          <label class="form-label">Número de barril *</label>
-          <input class="form-input" id="eNumero" type="text" placeholder="ej: 42">
+          <label class="form-label">Producto *</label>
+          <select class="form-input" id="eProducto">
+            <option value="">— Seleccioná un producto —</option>
+            <option value="Fernet">Fernet</option>
+            <option value="Aperol">Aperol</option>
+            <option value="Campari">Campari</option>
+            <option value="Gin">Gin</option>
+            <option value="Vodka">Vodka</option>
+            <option value="Whisky">Whisky</option>
+            <option value="Ron">Ron</option>
+            <option value="Tequila">Tequila</option>
+            <option value="Amaretto">Amaretto</option>
+            <option value="Triple Sec">Triple Sec</option>
+            <option value="Kahlúa">Kahlúa</option>
+            <option value="Vermouth Rojo">Vermouth Rojo</option>
+            <option value="Vermouth Blanco">Vermouth Blanco</option>
+            <option value="Bitter">Bitter</option>
+            <option value="Licor">Licor</option>
+            <option value="Champagne">Champagne</option>
+            <option value="Vino Blanco">Vino Blanco</option>
+            <option value="Vino Tinto">Vino Tinto</option>
+            <option value="Cerveza">Cerveza</option>
+            <option value="Gaseosa / Soda">Gaseosa / Soda</option>
+            <option value="Jugo">Jugo</option>
+          </select>
         </div>
         <div class="form-row">
-          <label class="form-label">Estilo de cerveza *</label>
-          <select class="form-input" id="eEstilo">
-            <option value="">— Seleccioná un estilo —</option>
-            <option value="Praha">Praha</option>
-            <option value="Ryle Pale">Ryle Pale</option>
-            <option value="King Bee">King Bee</option>
-            <option value="Mesopotamia">Mesopotamia</option>
-            <option value="Silesia">Silesia</option>
-            <option value="Good Devil">Good Devil</option>
-            <option value="Hellfish">Hellfish</option>
-            <option value="Hodgson">Hodgson</option>
-            <option value="Moravia">Moravia</option>
-            <option value="Cotton Field">Cotton Field</option>
-            <option value="Street Rules">Street Rules</option>
-          </select>
+          <label class="form-label">Marca *</label>
+          <input class="form-input" id="eMarca" type="text" placeholder="ej: Branca, Bols, Johnnie Walker...">
         </div>
         <div class="form-row">
           <label class="form-label">Estado</label>
           <select class="form-input" id="eEstado">
-            <option value="lleno_stock">Lleno (en stock)</option>
-            <option value="pinchado_barra_arriba">Pinchado barra arriba</option>
-            <option value="pinchado_barra_abajo">Pinchado barra abajo</option>
-            <option value="vacio">Vacío</option>
+            <option value="cerrada_stock">Cerrada (en stock)</option>
+            <option value="abierta_barra">Abierta en barra</option>
+            <option value="vacia">Vacía</option>
           </select>
         </div>
         <div class="form-row">
@@ -1652,132 +1410,86 @@
   <script>
     // ─── CONSTANTES ─────────────────────────────────────────────────────────────
     const ESTADOS = {
-      lleno_stock: { label: 'Lleno', badgeClass: 'badge-green', color: 'green', icon: '🟢' },
-      pinchado_barra_arriba: { label: 'Barra Arriba', badgeClass: 'badge-yellow', color: 'yellow', icon: '🟡' },
-      pinchado_barra_abajo: { label: 'Barra Abajo', badgeClass: 'badge-yellow', color: 'yellow', icon: '🟡' },
-      vacio: { label: 'Vacío', badgeClass: 'badge-red', color: 'red', icon: '🔴' },
-      egresado: { label: 'Devuelto', badgeClass: 'badge-gray', color: 'gray', icon: '↩️' }
+      cerrada_stock:  { label: 'Cerrada',      badgeClass: 'badge-green',  color: 'green',  icon: '🟢' },
+      abierta_barra:  { label: 'Abierta',       badgeClass: 'badge-yellow', color: 'yellow', icon: '🟡' },
+      vacia:          { label: 'Vacía',         badgeClass: 'badge-red',    color: 'red',    icon: '🔴' },
+      egresada:       { label: 'Egresada',      badgeClass: 'badge-gray',   color: 'gray',   icon: '↩️' }
     };
 
     const UBICACION_MAP = {
-      lleno_stock: 'deposito',
-      pinchado_barra_arriba: 'barra_arriba',
-      pinchado_barra_abajo: 'barra_abajo',
-      vacio: 'sector_vacios',
-      egresado: 'devuelto_proveedor'
+      cerrada_stock: 'deposito',
+      abierta_barra: 'barra',
+      vacia:         'sector_vacias',
+      egresada:      'descartada'
     };
 
     const UBICACION_LABELS = {
-      deposito: 'Depósito',
-      barra_arriba: 'Barra Arriba',
-      barra_abajo: 'Barra Abajo',
-      sector_vacios: 'Sector Vacíos',
-      devuelto_proveedor: 'Devuelto al proveedor'
+      deposito:      'Depósito',
+      barra:         'Barra',
+      sector_vacias: 'Sector Vacías',
+      descartada:    'Descartada / Egresada'
     };
 
     const PAGE_TITLES = {
       dashboard: 'Dashboard',
-      barriles: 'Barriles',
-      egresos: 'Egresos',
+      botellas:  'Botellas',
+      egresos:   'Egresos',
       historial: 'Historial'
     };
 
-    // ─── STOCK INICIAL ────────────────────────────────────────────────────────────
-    const DATOS_PRUEBA = [
-      // LLENOS EN STOCK
-      { numero: '72', estilo: 'Hellfish', estado: 'lleno_stock' },
-      { numero: '448', estilo: 'Hellfish', estado: 'lleno_stock' },
-      { numero: '229', estilo: 'Good Devil', estado: 'lleno_stock' },
-      { numero: '267', estilo: 'Good Devil', estado: 'lleno_stock' },
-      { numero: '157', estilo: 'Ryle Pale', estado: 'lleno_stock' },
-      { numero: '233', estilo: 'Ryle Pale', estado: 'lleno_stock' },
-      { numero: '105', estilo: 'Ryle Pale', estado: 'lleno_stock' },
-      { numero: '495', estilo: 'Ryle Pale', estado: 'lleno_stock' },
-      { numero: '437', estilo: 'King Bee', estado: 'lleno_stock' },
-      { numero: '291', estilo: 'King Bee', estado: 'lleno_stock' },
-      { numero: '82', estilo: 'Hodgson', estado: 'lleno_stock' },
-      { numero: '147', estilo: 'Hodgson', estado: 'lleno_stock' },
-      { numero: '336', estilo: 'Praha', estado: 'lleno_stock' },
-      // VACÍOS
-      { numero: '288', estilo: 'King Bee', estado: 'vacio' },
-      { numero: '481', estilo: 'Hellfish', estado: 'vacio' },
-      { numero: '148', estilo: 'Hellfish', estado: 'vacio' },
-      { numero: '35', estilo: 'Good Devil', estado: 'vacio' },
-      { numero: '210', estilo: 'Good Devil', estado: 'vacio' },
-      { numero: '64', estilo: 'Hodgson', estado: 'vacio' },
-      { numero: '69', estilo: 'Hodgson', estado: 'vacio' },
-      { numero: '203', estilo: 'Hodgson', estado: 'vacio' },
-      { numero: '380', estilo: 'Ryle Pale', estado: 'vacio' },
-      { numero: '282', estilo: 'Praha', estado: 'vacio' },
-      // PINCHADO BARRA ABAJO
-      { numero: '121', estilo: 'Ryle Pale', estado: 'pinchado_barra_abajo' },
-      { numero: '417', estilo: 'King Bee', estado: 'pinchado_barra_abajo' },
-      { numero: '378', estilo: 'Hodgson', estado: 'pinchado_barra_abajo' },
-      { numero: '296', estilo: 'Praha', estado: 'pinchado_barra_abajo' },
-      { numero: '174', estilo: 'Praha', estado: 'pinchado_barra_abajo' }, // ojo: también listado en barra arriba, se cargó en barra abajo
-      { numero: '323', estilo: 'Hellfish', estado: 'pinchado_barra_abajo' },
-      { numero: '207', estilo: 'Good Devil', estado: 'pinchado_barra_abajo' },
-      { numero: '420', estilo: 'Moravia', estado: 'pinchado_barra_abajo' }, // ojo: también listado en barra arriba, se cargó en barra abajo
-      // PINCHADO BARRA ARRIBA
-      { numero: '388', estilo: 'Ryle Pale', estado: 'pinchado_barra_arriba' },
-      { numero: '180', estilo: 'King Bee', estado: 'pinchado_barra_arriba' },
-      { numero: '243', estilo: 'Hodgson', estado: 'pinchado_barra_arriba' },
-      { numero: '227', estilo: 'Hellfish', estado: 'pinchado_barra_arriba' },
-      { numero: '347', estilo: 'Good Devil', estado: 'pinchado_barra_arriba' },
-    ];
+    // ─── SUPABASE ─────────────────────────────────────────────────────────────────
+    // Mismo proyecto Supabase, tablas distintas: botellas_cocteleria / movimientos_cocteleria
+    const SUPABASE_URL = 'https://nsaqwihmbpvvkecliwvr.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_vguY4Tm69OstSoK5pQKyDw_EABZxtLh';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // ─── STORAGE ─────────────────────────────────────────────────────────────────
-    let barriles = [];
+    let botellas    = [];
     let movimientos = [];
 
-    function cargarDatos() {
-      try {
-        const b = localStorage.getItem('barriles_v1');
-        const m = localStorage.getItem('movimientos_v1');
-        barriles = b ? JSON.parse(b) : [];
-        movimientos = m ? JSON.parse(m) : [];
-      } catch (e) {
-        barriles = []; movimientos = [];
-      }
-
-      if (barriles.length === 0) {
-        // Cargar datos de prueba
-        DATOS_PRUEBA.forEach(d => {
-          const id = genId();
-          const estado = d.estado;
-          const ubicacion = UBICACION_MAP[estado];
-          const now = new Date().toISOString();
-          barriles.push({
-            id, numero_barril: d.numero, estilo: d.estilo,
-            estado_actual: estado, ubicacion_actual: ubicacion,
-            fecha_ultimo_cambio: now, observaciones: ''
-          });
-          movimientos.push({
-            id_movimiento: genId(), id_barril: id,
-            fecha_hora: now,
-            estado_anterior: null, estado_nuevo: estado,
-            ubicacion_anterior: null, ubicacion_nueva: ubicacion,
-            observacion: 'Carga inicial de datos de prueba'
-          });
-        });
-        guardarDatos();
-      }
-    }
-
-    function guardarDatos() {
-      localStorage.setItem('barriles_v1', JSON.stringify(barriles));
-      localStorage.setItem('movimientos_v1', JSON.stringify(movimientos));
-    }
-
     function genId() {
-      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 11);
+    }
+
+    async function cargarDatos() {
+      try {
+        const [{ data: b, error: eb }, { data: m, error: em }] = await Promise.all([
+          sb.from('botellas_cocteleria').select('*').order('nombre_botella'),
+          sb.from('movimientos_cocteleria').select('*').order('fecha_hora')
+        ]);
+        if (eb) throw eb;
+        if (em) throw em;
+        botellas    = b || [];
+        movimientos = m || [];
+      } catch (e) {
+        console.error(e);
+        toast('Error conectando a la base de datos. Verificá que las tablas estén creadas.', 'error');
+      }
+    }
+
+    async function recargarDatos() {
+      const [{ data: b }, { data: m }] = await Promise.all([
+        sb.from('botellas_cocteleria').select('*').order('nombre_botella'),
+        sb.from('movimientos_cocteleria').select('*').order('fecha_hora')
+      ]);
+      botellas    = b || [];
+      movimientos = m || [];
+      refreshCurrentPage();
+    }
+
+    function suscribirRealtime() {
+      sb.channel('cocteleria-sync')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'botellas_cocteleria' },    recargarDatos)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'movimientos_cocteleria' }, recargarDatos)
+        .subscribe();
     }
 
     // ─── NAVEGACIÓN ───────────────────────────────────────────────────────────────
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', () => {
-        const page = item.dataset.page;
-        navigateTo(page);
+        navigateTo(item.dataset.page);
         closeSidebar();
       });
     });
@@ -1788,8 +1500,8 @@
       document.getElementById('topbarTitle').textContent = PAGE_TITLES[page] || page;
 
       if (page === 'dashboard') renderDashboard();
-      if (page === 'barriles') { renderEstilosFilter(); renderBarriles(); }
-      if (page === 'egresos') renderEgresos();
+      if (page === 'botellas') { renderProductosFilter(); renderBotellas(); }
+      if (page === 'egresos')   renderEgresos();
       if (page === 'historial') renderHistorial();
     }
 
@@ -1806,70 +1518,67 @@
 
     // ─── DASHBOARD ────────────────────────────────────────────────────────────────
     function renderDashboard() {
-      // KPIs (excluye egresados del stock activo)
-      const stock = barriles.filter(b => b.estado_actual !== 'egresado');
-      const llenos = stock.filter(b => b.estado_actual === 'lleno_stock').length;
-      const arr = stock.filter(b => b.estado_actual === 'pinchado_barra_arriba').length;
-      const abj = stock.filter(b => b.estado_actual === 'pinchado_barra_abajo').length;
-      const vacios = stock.filter(b => b.estado_actual === 'vacio').length;
-      const total = stock.length;
+      const stock   = botellas.filter(b => b.estado_actual !== 'egresada');
+      const cerradas = stock.filter(b => b.estado_actual === 'cerrada_stock').length;
+      const abiertas = stock.filter(b => b.estado_actual === 'abierta_barra').length;
+      const vacias   = stock.filter(b => b.estado_actual === 'vacia').length;
+      const total    = stock.length;
 
       document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi-card green">
-      <span class="kpi-icon">🟢</span>
-      <div class="kpi-value">${llenos}</div>
-      <div class="kpi-label">Barriles Llenos</div>
-    </div>
-    <div class="kpi-card yellow">
-      <span class="kpi-icon">⬆️</span>
-      <div class="kpi-value">${arr}</div>
-      <div class="kpi-label">Barra Arriba</div>
-    </div>
-    <div class="kpi-card yellow" style="--yellow:#eab308;--yellow-dim:rgba(234,179,8,.12)">
-      <span class="kpi-icon">⬇️</span>
-      <div class="kpi-value" style="color:#eab308">${abj}</div>
-      <div class="kpi-label">Barra Abajo</div>
-    </div>
-    <div class="kpi-card red">
-      <span class="kpi-icon">🔴</span>
-      <div class="kpi-value">${vacios}</div>
-      <div class="kpi-label">Vacíos</div>
-    </div>
-    <div class="kpi-card blue">
-      <span class="kpi-icon">🍺</span>
-      <div class="kpi-value">${total}</div>
-      <div class="kpi-label">Total Barriles</div>
-    </div>
-  `;
+        <div class="kpi-card green">
+          <span class="kpi-icon">🟢</span>
+          <div class="kpi-value">${cerradas}</div>
+          <div class="kpi-label">Cerradas (Stock)</div>
+        </div>
+        <div class="kpi-card yellow">
+          <span class="kpi-icon">🍸</span>
+          <div class="kpi-value">${abiertas}</div>
+          <div class="kpi-label">Abiertas en Barra</div>
+        </div>
+        <div class="kpi-card red">
+          <span class="kpi-icon">🔴</span>
+          <div class="kpi-value">${vacias}</div>
+          <div class="kpi-label">Vacías</div>
+        </div>
+        <div class="kpi-card purple">
+          <span class="kpi-icon">🍾</span>
+          <div class="kpi-value">${total}</div>
+          <div class="kpi-label">Total en uso</div>
+        </div>
+      `;
 
-      // Resumen por estilo (excluye egresados)
-      const estilosMap = {};
+      // Resumen por producto + marca
+      const productosMap = {};
       stock.forEach(b => {
-        if (!estilosMap[b.estilo]) estilosMap[b.estilo] = { lleno: 0, pinchado: 0, vacio: 0 };
-        if (b.estado_actual === 'lleno_stock') estilosMap[b.estilo].lleno++;
-        else if (b.estado_actual === 'vacio') estilosMap[b.estilo].vacio++;
-        else estilosMap[b.estilo].pinchado++;
+        const key = `${b.producto}|||${b.marca || ''}`;
+        if (!productosMap[key]) productosMap[key] = { producto: b.producto, marca: b.marca || '', cerrada: 0, abierta: 0, vacia: 0 };
+        if (b.estado_actual === 'cerrada_stock') productosMap[key].cerrada++;
+        else if (b.estado_actual === 'abierta_barra') productosMap[key].abierta++;
+        else productosMap[key].vacia++;
       });
 
-      const estilosHTML = Object.entries(estilosMap)
-        .sort((a, b) => (b[1].lleno + b[1].pinchado + b[1].vacio) - (a[1].lleno + a[1].pinchado + a[1].vacio))
-        .map(([estilo, counts]) => {
-          const total = counts.lleno + counts.pinchado + counts.vacio;
+      const productosHTML = Object.values(productosMap)
+        .sort((a, b) => (b.cerrada + b.abierta + b.vacia) - (a.cerrada + a.abierta + a.vacia))
+        .map(({ producto, marca, cerrada, abierta, vacia }) => {
+          const tot = cerrada + abierta + vacia;
           const pills = [
-            counts.lleno ? `<span class="epill ep-g">${counts.lleno} lleno${counts.lleno > 1 ? 's' : ''}</span>` : '',
-            counts.pinchado ? `<span class="epill ep-y">${counts.pinchado} pinchadx</span>` : '',
-            counts.vacio ? `<span class="epill ep-r">${counts.vacio} vacío${counts.vacio > 1 ? 's' : ''}</span>` : ''
+            cerrada ? `<span class="ppill pp-g">${cerrada} cerrada${cerrada > 1 ? 's' : ''}</span>` : '',
+            abierta ? `<span class="ppill pp-y">${abierta} abierta${abierta > 1 ? 's' : ''}</span>` : '',
+            vacia   ? `<span class="ppill pp-r">${vacia} vacía${vacia > 1 ? 's' : ''}</span>`       : ''
           ].filter(Boolean).join('');
           return `
-        <div class="estilo-row">
-          <div class="estilo-name">${esc(estilo)}</div>
-          <div class="estilo-pills">${pills}</div>
-          <div class="estilo-total">${total}</div>
-        </div>`;
+            <div class="producto-row">
+              <div class="producto-name">
+                ${esc(producto)}
+                ${marca ? `<span style="font-size:.76rem;color:var(--text3);font-weight:400;"> · ${esc(marca)}</span>` : ''}
+              </div>
+              <div class="producto-pills">${pills}</div>
+              <div class="producto-total">${tot}</div>
+            </div>`;
         }).join('');
 
-      document.getElementById('estiloResumen').innerHTML = estilosHTML ||
-        '<div class="empty-state"><p>Sin barriles registrados</p></div>';
+      document.getElementById('productoResumen').innerHTML = productosHTML ||
+        '<div class="empty-state"><p>Sin botellas registradas</p></div>';
 
       // Últimos movimientos
       const ultimos = [...movimientos]
@@ -1881,74 +1590,72 @@
         : '<div class="empty-state"><p>Sin movimientos aún</p></div>';
     }
 
-    // ─── TABLA BARRILES ───────────────────────────────────────────────────────────
-    function renderEstilosFilter() {
-      const estilos = [...new Set(barriles.filter(b => b.estado_actual !== 'egresado').map(b => b.estilo))].sort();
-      const sel = document.getElementById('filterEstilo');
+    // ─── TABLA BOTELLAS ───────────────────────────────────────────────────────────
+    function renderProductosFilter() {
+      const productos = [...new Set(botellas.filter(b => b.estado_actual !== 'egresada').map(b => b.producto))].sort();
+      const sel = document.getElementById('filterProducto');
       const val = sel.value;
-      sel.innerHTML = '<option value="">Todos los estilos</option>' +
-        estilos.map(e => `<option value="${esc(e)}" ${val === e ? 'selected' : ''}>${esc(e)}</option>`).join('');
+      sel.innerHTML = '<option value="">Todos los productos</option>' +
+        productos.map(p => `<option value="${esc(p)}" ${val === p ? 'selected' : ''}>${esc(p)}</option>`).join('');
     }
 
-    function renderBarriles() {
-      const q = document.getElementById('searchBarril').value.trim().toLowerCase();
-      const estado = document.getElementById('filterEstado').value;
-      const estilo = document.getElementById('filterEstilo').value;
+    function renderBotellas() {
+      const q        = document.getElementById('searchBotella').value.trim().toLowerCase();
+      const estado   = document.getElementById('filterEstado').value;
+      const producto = document.getElementById('filterProducto').value;
 
-      let filtered = barriles.filter(b => {
-        if (b.estado_actual === 'egresado') return false;
-        if (q && !b.numero_barril.toLowerCase().includes(q)) return false;
-        if (estado && b.estado_actual !== estado) return false;
-        if (estilo && b.estilo !== estilo) return false;
+      let filtered = botellas.filter(b => {
+        if (b.estado_actual === 'egresada') return false;
+        if (q && !b.nombre_botella.toLowerCase().includes(q) && !b.producto.toLowerCase().includes(q)) return false;
+        if (estado   && b.estado_actual !== estado)   return false;
+        if (producto && b.producto      !== producto) return false;
         return true;
-      }).sort((a, b) => a.numero_barril.localeCompare(b.numero_barril, undefined, { numeric: true }));
+      }).sort((a, b) => a.nombre_botella.localeCompare(b.nombre_botella, undefined, { numeric: true }));
 
-      document.getElementById('countLabel').textContent = `${filtered.length} / ${barriles.length} barriles`;
+      document.getElementById('countLabel').textContent = `${filtered.length} / ${botellas.filter(b=>b.estado_actual!=='egresada').length} botellas`;
 
-      const tbody = document.getElementById('barrilesBody');
+      const tbody = document.getElementById('botellasBody');
       tbody.innerHTML = filtered.map(b => {
-        const est = ESTADOS[b.estado_actual];
+        const est     = ESTADOS[b.estado_actual];
         const fechaStr = formatFecha(b.fecha_ultimo_cambio);
         return `<tr>
-      <td><span class="num-barril">#${esc(b.numero_barril)}</span></td>
-      <td><span class="style-pill" title="${esc(b.estilo)}">${esc(b.estilo)}</span></td>
-      <td><span class="badge ${est.badgeClass}"><span class="badge-dot"></span>${est.label}</span></td>
-      <td><span style="font-size:.78rem;color:var(--text2);">${UBICACION_LABELS[b.ubicacion_actual] || b.ubicacion_actual}</span></td>
-      <td class="mono" style="color:var(--text3);font-size:.76rem;">${fechaStr}</td>
-      <td class="obs-cell" title="${esc(b.observaciones || '')}">${esc(b.observaciones || '—')}</td>
-      <td>
-        <div class="action-btns">
-          ${b.estado_actual !== 'lleno_stock' ? `<button class="action-btn ab-green"     onclick="cambiarEstado('${b.id}','lleno_stock')">✅ Lleno</button>` : ''}
-          ${b.estado_actual !== 'pinchado_barra_arriba' ? `<button class="action-btn ab-yellow-up"  onclick="cambiarEstado('${b.id}','pinchado_barra_arriba')">⬆️ Barra Arriba</button>` : ''}
-          ${b.estado_actual !== 'pinchado_barra_abajo' ? `<button class="action-btn ab-yellow-dn"  onclick="cambiarEstado('${b.id}','pinchado_barra_abajo')">⬇️ Barra Abajo</button>` : ''}
-          ${b.estado_actual !== 'vacio' ? `<button class="action-btn ab-red"        onclick="cambiarEstado('${b.id}','vacio')">🔴 Vacío</button>` : ''}
-          <button class="action-btn ab-del"  title="Información" onclick="verDetalle('${b.id}')">📋</button>
-          <button class="action-btn ab-blue" title="Editar"       onclick="editarBarril('${b.id}')">✏️</button>
-          <button class="action-btn ab-del"  title="Eliminar"     onclick="confirmarEliminar('${b.id}')">🗑</button>
-        </div>
-        <!-- Mobile -->
-        <div class="mobile-actions" id="mob_${b.id}">
-          <button class="action-btn ab-del btn-sm" onclick="toggleMobileMenu('${b.id}')">Acciones ▾</button>
-          <div class="mobile-actions-menu" id="mobmenu_${b.id}">
-            ${b.estado_actual !== 'lleno_stock' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','lleno_stock');toggleMobileMenu('${b.id}')">✅ Marcar como Lleno</button>` : ''}
-            ${b.estado_actual !== 'pinchado_barra_arriba' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','pinchado_barra_arriba');toggleMobileMenu('${b.id}')">⬆️ Pinchar Barra Arriba</button>` : ''}
-            ${b.estado_actual !== 'pinchado_barra_abajo' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','pinchado_barra_abajo');toggleMobileMenu('${b.id}')">⬇️ Pinchar Barra Abajo</button>` : ''}
-            ${b.estado_actual !== 'vacio' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','vacio');toggleMobileMenu('${b.id}')">🔴 Marcar Vacío</button>` : ''}
-            <button class="mobile-menu-item" onclick="verDetalle('${b.id}');toggleMobileMenu('${b.id}')">📋 Ver historial</button>
-            <button class="mobile-menu-item" onclick="editarBarril('${b.id}');toggleMobileMenu('${b.id}')">✏️ Editar</button>
-            <button class="mobile-menu-item" style="color:var(--red)" onclick="confirmarEliminar('${b.id}')">🗑 Eliminar</button>
-          </div>
-        </div>
-      </td>
-    </tr>`;
+          <td><span class="num-botella">${esc(b.nombre_botella)}</span></td>
+          <td><span class="producto-pill" title="${esc(b.producto)}">${esc(b.producto)}</span></td>
+          <td style="font-size:.82rem;color:var(--text2);">${esc(b.marca || '—')}</td>
+          <td><span class="badge ${est.badgeClass}"><span class="badge-dot"></span>${est.label}</span></td>
+          <td><span style="font-size:.78rem;color:var(--text2);">${UBICACION_LABELS[b.ubicacion_actual] || b.ubicacion_actual}</span></td>
+          <td class="mono" style="color:var(--text3);font-size:.76rem;">${fechaStr}</td>
+          <td class="obs-cell" title="${esc(b.observaciones || '')}">${esc(b.observaciones || '—')}</td>
+          <td>
+            <div class="action-btns">
+              ${b.estado_actual !== 'cerrada_stock' ? `<button class="action-btn ab-green"  onclick="cambiarEstado('${b.id}','cerrada_stock')">🟢 Cerrada</button>` : ''}
+              ${b.estado_actual !== 'abierta_barra' ? `<button class="action-btn ab-yellow" onclick="cambiarEstado('${b.id}','abierta_barra')">🍸 Abierta</button>` : ''}
+              ${b.estado_actual !== 'vacia'          ? `<button class="action-btn ab-red"    onclick="cambiarEstado('${b.id}','vacia')">🔴 Vacía</button>` : ''}
+              <button class="action-btn ab-del"  title="Ver historial" onclick="verDetalle('${b.id}')">📋</button>
+              <button class="action-btn ab-blue" title="Editar"        onclick="editarBotella('${b.id}')">✏️</button>
+              <button class="action-btn ab-del"  title="Eliminar"      onclick="confirmarEliminar('${b.id}')">🗑</button>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile-actions" id="mob_${b.id}">
+              <button class="action-btn ab-del btn-sm" onclick="toggleMobileMenu('${b.id}')">Acciones ▾</button>
+              <div class="mobile-actions-menu" id="mobmenu_${b.id}">
+                ${b.estado_actual !== 'cerrada_stock' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','cerrada_stock');toggleMobileMenu('${b.id}')">🟢 Marcar Cerrada</button>` : ''}
+                ${b.estado_actual !== 'abierta_barra' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','abierta_barra');toggleMobileMenu('${b.id}')">🍸 Marcar Abierta</button>` : ''}
+                ${b.estado_actual !== 'vacia'          ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','vacia');toggleMobileMenu('${b.id}')">🔴 Marcar Vacía</button>` : ''}
+                <button class="mobile-menu-item" onclick="verDetalle('${b.id}');toggleMobileMenu('${b.id}')">📋 Ver historial</button>
+                <button class="mobile-menu-item" onclick="editarBotella('${b.id}');toggleMobileMenu('${b.id}')">✏️ Editar</button>
+                <button class="mobile-menu-item" style="color:var(--red)" onclick="confirmarEliminar('${b.id}')">🗑 Eliminar</button>
+              </div>
+            </div>
+          </td>
+        </tr>`;
       }).join('');
 
-      document.getElementById('barrilesEmpty').style.display = filtered.length ? 'none' : 'block';
+      document.getElementById('botellasEmpty').style.display = filtered.length ? 'none' : 'block';
     }
 
     function toggleMobileMenu(id) {
-      const menu = document.getElementById('mobmenu_' + id);
-      menu.classList.toggle('open');
+      document.getElementById('mobmenu_' + id).classList.toggle('open');
     }
 
     // ─── HISTORIAL ────────────────────────────────────────────────────────────────
@@ -1957,18 +1664,18 @@
 
     function renderHistorial(reset = true) {
       if (reset) histOffset = 0;
-      const q = document.getElementById('searchHistBarril').value.trim().toLowerCase();
+      const q    = document.getElementById('searchHistBotella').value.trim().toLowerCase();
       const ests = document.getElementById('filterHistEstado').value;
 
       let filtered = movimientos.filter(m => {
-        const b = barriles.find(x => x.id === m.id_barril);
-        const num = b ? b.numero_barril.toLowerCase() : '';
-        if (q && !num.includes(q)) return false;
+        const b   = botellas.find(x => x.id === m.id_botella);
+        const nom = b ? b.nombre_botella.toLowerCase() : '';
+        if (q   && !nom.includes(q))      return false;
         if (ests && m.estado_nuevo !== ests) return false;
         return true;
       }).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
-      const page = filtered.slice(0, histOffset + HIST_PAGE_SIZE);
+      const page    = filtered.slice(0, histOffset + HIST_PAGE_SIZE);
       const hasMore = filtered.length > page.length;
 
       const html = page.map(m => renderMovItem(m, true)).join('');
@@ -1984,276 +1691,334 @@
 
     // ─── RENDER MOV ITEM ──────────────────────────────────────────────────────────
     function renderMovItem(m, showFull = false) {
-      const barril = barriles.find(b => b.id === m.id_barril);
-      const numStr = barril ? `#${barril.numero_barril}` : '#???';
-      const estiloStr = barril ? ` · ${barril.estilo}` : '';
-      const est = ESTADOS[m.estado_nuevo] || { label: m.estado_nuevo, color: 'blue' };
+      const botella  = botellas.find(b => b.id === m.id_botella);
+      const nomStr   = botella ? botella.nombre_botella : '???';
+      const prodStr  = botella ? ` · ${botella.producto}` : '';
+      const est      = ESTADOS[m.estado_nuevo] || { label: m.estado_nuevo, color: 'blue' };
       const colorMap = { green: '#22c55e', yellow: '#f59e0b', red: '#ef4444', blue: '#3b82f6', gray: '#94a3b8' };
-      const col = colorMap[est.color] || '#3b82f6';
+      const col      = colorMap[est.color] || '#3b82f6';
 
       const anterior = m.estado_anterior ? (ESTADOS[m.estado_anterior]?.label || m.estado_anterior) : '—';
-      const nuevo = est.label;
-      const desc = m.estado_anterior
+      const nuevo    = est.label;
+      const desc     = m.estado_anterior
         ? `${anterior} → ${nuevo}`
         : `Registro inicial: ${nuevo}`;
 
       return `<div class="mov-item">
-    <div class="mov-icon" style="background:${col}22;color:${col};">${est.icon || '↻'}</div>
-    <div class="mov-info">
-      <div class="mov-barril">${numStr}${showFull ? `<span style="font-weight:400;color:var(--text3);font-size:.8rem;">${esc(estiloStr)}</span>` : ''}</div>
-      <div class="mov-desc">${desc}</div>
-      ${m.observacion ? `<div class="mov-obs">${esc(m.observacion)}</div>` : ''}
-    </div>
-    <div class="mov-time">${formatFecha(m.fecha_hora)}</div>
-  </div>`;
+        <div class="mov-icon" style="background:${col}22;color:${col};">${est.icon || '↻'}</div>
+        <div class="mov-info">
+          <div class="mov-botella">${esc(nomStr)}${showFull ? `<span style="font-weight:400;color:var(--text3);font-size:.8rem;">${esc(prodStr)}</span>` : ''}</div>
+          <div class="mov-desc">${desc}</div>
+          ${m.observacion ? `<div class="mov-obs">${esc(m.observacion)}</div>` : ''}
+        </div>
+        <div class="mov-time">${formatFecha(m.fecha_hora)}</div>
+      </div>`;
     }
 
-    // ─── ACCIONES DE BARRIL ───────────────────────────────────────────────────────
-    let pendingAction = null;
-
+    // ─── CAMBIAR ESTADO ───────────────────────────────────────────────────────────
     function cambiarEstado(id, nuevoEstado) {
-      const barril = barriles.find(b => b.id === id);
-      if (!barril) return;
+      const botella = botellas.find(b => b.id === id);
+      if (!botella) return;
 
-      const est = ESTADOS[nuevoEstado];
+      const est   = ESTADOS[nuevoEstado];
       const modal = document.getElementById('modalObs');
       document.getElementById('modalObsTitle').textContent = `Cambiar estado → ${est.label}`;
       document.getElementById('modalObsDesc').innerHTML = `
-    Barril <strong class="confirm-highlight">#${esc(barril.numero_barril)}</strong> · ${esc(barril.estilo)}<br>
-    <span style="color:var(--text3);font-size:.82rem;">${ESTADOS[barril.estado_actual]?.label} → <strong style="color:var(--text)">${est.label}</strong></span>
-  `;
+        Botella <strong class="confirm-highlight">${esc(botella.nombre_botella)}</strong> · ${esc(botella.producto)}<br>
+        <span style="color:var(--text3);font-size:.82rem;">${ESTADOS[botella.estado_actual]?.label} → <strong style="color:var(--text)">${est.label}</strong></span>
+      `;
       document.getElementById('obsInput').value = '';
       document.getElementById('modalObsConfirm').onclick = () => ejecutarCambio(id, nuevoEstado);
       modal.classList.add('open');
       document.getElementById('obsInput').focus();
     }
 
-    function ejecutarCambio(id, nuevoEstado) {
-      const barril = barriles.find(b => b.id === id);
-      if (!barril) return;
+    async function ejecutarCambio(id, nuevoEstado) {
+      const botella = botellas.find(b => b.id === id);
+      if (!botella) return;
 
-      const obs = document.getElementById('obsInput').value.trim();
-      const now = new Date().toISOString();
+      const obs      = document.getElementById('obsInput').value.trim();
+      const now      = new Date().toISOString();
       const nuevaUbic = UBICACION_MAP[nuevoEstado];
 
-      movimientos.push({
-        id_movimiento: genId(),
-        id_barril: id,
-        fecha_hora: now,
-        estado_anterior: barril.estado_actual,
-        estado_nuevo: nuevoEstado,
-        ubicacion_anterior: barril.ubicacion_actual,
-        ubicacion_nueva: nuevaUbic,
+      const prevEstado = botella.estado_actual;
+      const prevUbic   = botella.ubicacion_actual;
+      const prevFecha  = botella.fecha_ultimo_cambio;
+      const prevObs    = botella.observaciones;
+
+      const mov = {
+        id_movimiento: genId(), id_botella: id, fecha_hora: now,
+        estado_anterior: botella.estado_actual, estado_nuevo: nuevoEstado,
+        ubicacion_anterior: botella.ubicacion_actual, ubicacion_nueva: nuevaUbic,
         observacion: obs
-      });
+      };
 
-      barril.estado_actual = nuevoEstado;
-      barril.ubicacion_actual = nuevaUbic;
-      barril.fecha_ultimo_cambio = now;
-      barril.observaciones = obs || barril.observaciones;
+      // Optimistic update
+      movimientos.push(mov);
+      botella.estado_actual     = nuevoEstado;
+      botella.ubicacion_actual  = nuevaUbic;
+      botella.fecha_ultimo_cambio = now;
+      botella.observaciones     = obs || botella.observaciones;
 
-      guardarDatos();
       closeModal('modalObs');
-      toast(`Barril #${barril.numero_barril} → ${ESTADOS[nuevoEstado].label}`, 'success');
-
-      // Refresh active page
+      toast(`${esc(botella.nombre_botella)} → ${ESTADOS[nuevoEstado].label}`, 'success');
       refreshCurrentPage();
+
+      const results = await Promise.all([
+        sb.from('botellas_cocteleria').update({
+          estado_actual: nuevoEstado, ubicacion_actual: nuevaUbic,
+          fecha_ultimo_cambio: now, observaciones: botella.observaciones
+        }).eq('id', id),
+        sb.from('movimientos_cocteleria').insert(mov)
+      ]);
+      const err = results.find(r => r.error)?.error;
+      if (err) {
+        botella.estado_actual     = prevEstado;
+        botella.ubicacion_actual  = prevUbic;
+        botella.fecha_ultimo_cambio = prevFecha;
+        botella.observaciones     = prevObs;
+        movimientos = movimientos.filter(m => m.id_movimiento !== mov.id_movimiento);
+        toast(`Error al guardar cambio: ${err.message}`, 'error');
+        refreshCurrentPage();
+      }
     }
 
-    // ─── NUEVO BARRIL ─────────────────────────────────────────────────────────────
-    function toggleEstiloOtro() {
-      const sel = document.getElementById('nEstilo');
-      const row = document.getElementById('rowEstiloOtro');
-      const input = document.getElementById('nEstiloOtro');
+    // ─── NUEVA BOTELLA ────────────────────────────────────────────────────────────
+    function toggleProductoOtro() {
+      const sel    = document.getElementById('nProducto');
+      const row    = document.getElementById('rowProductoOtro');
+      const input  = document.getElementById('nProductoOtro');
       const esOtro = sel.value === '__otro__';
       row.style.display = esOtro ? 'block' : 'none';
       if (esOtro) { input.value = ''; input.focus(); }
     }
 
     function openModalNuevo() {
-      document.getElementById('nNúmero').value = '';
-      document.getElementById('nEstilo').value = '';
-      document.getElementById('nEstiloOtro').value = '';
-      document.getElementById('rowEstiloOtro').style.display = 'none';
-      document.getElementById('nEstado').value = 'lleno_stock';
-      document.getElementById('nObs').value = '';
+      document.getElementById('nProducto').value     = '';
+      document.getElementById('nProductoOtro').value = '';
+      document.getElementById('rowProductoOtro').style.display = 'none';
+      document.getElementById('nMarca').value        = '';
+      document.getElementById('nCantidad').value     = '1';
+      document.getElementById('nEstado').value       = 'cerrada_stock';
+      document.getElementById('nObs').value          = '';
       document.getElementById('modalNuevo').classList.add('open');
-      document.getElementById('nNúmero').focus();
+      document.getElementById('nProducto').focus();
     }
 
-    function guardarNuevoBarril() {
-      const numero = document.getElementById('nNúmero').value.trim();
-      const selVal = document.getElementById('nEstilo').value;
-      const estilo = selVal === '__otro__'
-        ? document.getElementById('nEstiloOtro').value.trim()
+    async function guardarNuevaBotella() {
+      const selVal   = document.getElementById('nProducto').value;
+      const producto = selVal === '__otro__'
+        ? document.getElementById('nProductoOtro').value.trim()
         : selVal;
-      const estado = document.getElementById('nEstado').value;
-      const obs = document.getElementById('nObs').value.trim();
+      const marca    = document.getElementById('nMarca').value.trim();
+      const cantidad = Math.max(1, Math.min(99, parseInt(document.getElementById('nCantidad').value) || 1));
+      const estado   = document.getElementById('nEstado').value;
+      const obs      = document.getElementById('nObs').value.trim();
 
-      if (!numero) { toast('Ingresá el número de barril', 'error'); return; }
-      if (!estilo) { toast('Seleccioná o escribí el estilo de cerveza', 'error'); return; }
-      if (barriles.find(b => b.numero_barril.toLowerCase() === numero.toLowerCase())) {
-        toast(`El barril #${numero} ya existe`, 'error'); return;
+      if (!producto) { toast('Seleccioná o escribí el producto', 'error'); return; }
+      if (!marca)    { toast('Ingresá la marca', 'error'); return; }
+
+      // Calcular próximo número correlativo para este producto + marca
+      const existentes = botellas.filter(b => b.producto === producto && b.marca === marca);
+      const nums = existentes.map(b => {
+        const m = b.nombre_botella.match(/^#(\d+)$/);
+        return m ? parseInt(m[1]) : 0;
+      });
+      const startNum = nums.length ? Math.max(...nums) + 1 : 1;
+
+      const now  = new Date().toISOString();
+      const ubic = UBICACION_MAP[estado];
+
+      const nuevasBotellas = [];
+      const nuevosMovs     = [];
+
+      for (let i = 0; i < cantidad; i++) {
+        const id     = genId();
+        const nombre = `#${startNum + i}`;
+        const botella = { id, nombre_botella: nombre, producto, marca, estado_actual: estado, ubicacion_actual: ubic, fecha_ultimo_cambio: now, observaciones: obs };
+        const mov     = { id_movimiento: genId(), id_botella: id, fecha_hora: now, estado_anterior: null, estado_nuevo: estado, ubicacion_anterior: null, ubicacion_nueva: ubic, observacion: obs || 'Botella agregada' };
+        nuevasBotellas.push(botella);
+        nuevosMovs.push(mov);
+        botellas.push(botella);
+        movimientos.push(mov);
       }
 
-      const id = genId();
-      const ubic = UBICACION_MAP[estado];
-      const now = new Date().toISOString();
-
-      barriles.push({
-        id, numero_barril: numero, estilo,
-        estado_actual: estado, ubicacion_actual: ubic,
-        fecha_ultimo_cambio: now, observaciones: obs
-      });
-      movimientos.push({
-        id_movimiento: genId(), id_barril: id, fecha_hora: now,
-        estado_anterior: null, estado_nuevo: estado,
-        ubicacion_anterior: null, ubicacion_nueva: ubic,
-        observacion: obs || 'Barril agregado'
-      });
-
-      guardarDatos();
       closeModal('modalNuevo');
-      toast(`Barril #${numero} agregado correctamente`, 'success');
+      toast(`${cantidad} botella${cantidad > 1 ? 's' : ''} de ${producto} ${marca} agregada${cantidad > 1 ? 's' : ''}`, 'success');
       refreshCurrentPage();
+      renderProductosFilter();
 
-      // Actualizar filtro estilos
-      renderEstilosFilter();
+      const results = await Promise.all([
+        sb.from('botellas_cocteleria').insert(nuevasBotellas),
+        sb.from('movimientos_cocteleria').insert(nuevosMovs)
+      ]);
+      const err = results.find(r => r.error)?.error;
+      if (err) {
+        nuevasBotellas.forEach(b => { botellas    = botellas.filter(x => x.id !== b.id); });
+        nuevosMovs.forEach(m     => { movimientos = movimientos.filter(x => x.id_movimiento !== m.id_movimiento); });
+        toast(`Error al guardar: ${err.message}`, 'error');
+        refreshCurrentPage();
+        renderProductosFilter();
+      }
     }
 
-    // ─── EDITAR BARRIL ────────────────────────────────────────────────────────────
+    // ─── EDITAR BOTELLA ───────────────────────────────────────────────────────────
     let editandoId = null;
 
-    function editarBarril(id) {
-      const barril = barriles.find(b => b.id === id);
-      if (!barril) return;
+    function editarBotella(id) {
+      const botella = botellas.find(b => b.id === id);
+      if (!botella) return;
       editandoId = id;
 
-      document.getElementById('eNumero').value = barril.numero_barril;
-      document.getElementById('eEstado').value = barril.estado_actual;
-      document.getElementById('eObs').value = barril.observaciones || '';
+      document.getElementById('eMarca').value   = botella.marca || '';
+      document.getElementById('eEstado').value  = botella.estado_actual;
+      document.getElementById('eObs').value     = botella.observaciones || '';
 
-      const selEstilo = document.getElementById('eEstilo');
-      const opcionExiste = [...selEstilo.options].some(o => o.value === barril.estilo);
+      const selProd = document.getElementById('eProducto');
+      const opcionExiste = [...selProd.options].some(o => o.value === botella.producto);
       if (opcionExiste) {
-        selEstilo.value = barril.estilo;
+        selProd.value = botella.producto;
       } else {
-        // Si el estilo no está en la lista, agregar temporalmente
         const opt = document.createElement('option');
-        opt.value = barril.estilo; opt.textContent = barril.estilo;
-        selEstilo.appendChild(opt);
-        selEstilo.value = barril.estilo;
+        opt.value = botella.producto; opt.textContent = botella.producto;
+        selProd.appendChild(opt);
+        selProd.value = botella.producto;
       }
 
       document.getElementById('modalEditar').classList.add('open');
     }
 
-    function guardarEdicion() {
-      const barril = barriles.find(b => b.id === editandoId);
-      if (!barril) return;
+    async function guardarEdicion() {
+      const botella = botellas.find(b => b.id === editandoId);
+      if (!botella) return;
 
-      const numero = document.getElementById('eNumero').value.trim();
-      const estilo = document.getElementById('eEstilo').value;
-      const estado = document.getElementById('eEstado').value;
-      const obs = document.getElementById('eObs').value.trim();
+      const producto = document.getElementById('eProducto').value;
+      const marca    = document.getElementById('eMarca').value.trim();
+      const estado   = document.getElementById('eEstado').value;
+      const obs      = document.getElementById('eObs').value.trim();
 
-      if (!numero) { toast('Ingresá el número de barril', 'error'); return; }
-      if (!estilo) { toast('Seleccioná el estilo', 'error'); return; }
+      if (!producto) { toast('Seleccioná el producto', 'error'); return; }
+      if (!marca)    { toast('Ingresá la marca', 'error'); return; }
 
-      // Verificar duplicado de número (excluyendo el barril actual)
-      if (barriles.find(b => b.id !== editandoId && b.numero_barril.toLowerCase() === numero.toLowerCase())) {
-        toast(`El barril #${numero} ya existe`, 'error'); return;
-      }
+      const estadoCambio = estado !== botella.estado_actual;
+      const now          = new Date().toISOString();
+      let mov            = null;
 
-      const estadoCambio = estado !== barril.estado_actual;
-      const now = new Date().toISOString();
+      const prev = {
+        nombre_botella: botella.nombre_botella, producto: botella.producto, marca: botella.marca,
+        estado_actual: botella.estado_actual, ubicacion_actual: botella.ubicacion_actual,
+        observaciones: botella.observaciones, fecha_ultimo_cambio: botella.fecha_ultimo_cambio
+      };
 
       if (estadoCambio) {
-        movimientos.push({
-          id_movimiento: genId(),
-          id_barril: barril.id,
-          estado_anterior: barril.estado_actual,
-          estado_nuevo: estado,
-          fecha_hora: now,
-          observaciones: obs || 'Edición manual'
-        });
+        mov = {
+          id_movimiento: genId(), id_botella: botella.id,
+          estado_anterior: botella.estado_actual, estado_nuevo: estado,
+          fecha_hora: now, observacion: obs || 'Edición manual',
+          ubicacion_anterior: botella.ubicacion_actual, ubicacion_nueva: UBICACION_MAP[estado]
+        };
+        movimientos.push(mov);
       }
 
-      barril.numero_barril = numero;
-      barril.estilo = estilo;
-      barril.estado_actual = estado;
-      barril.ubicacion_actual = UBICACION_MAP[estado];
-      barril.observaciones = obs;
-      if (estadoCambio) barril.fecha_ultimo_cambio = now;
+      botella.producto         = producto;
+      botella.marca            = marca;
+      botella.estado_actual    = estado;
+      botella.ubicacion_actual = UBICACION_MAP[estado];
+      botella.observaciones    = obs;
+      if (estadoCambio) botella.fecha_ultimo_cambio = now;
 
-      guardarDatos();
       closeModal('modalEditar');
-      toast(`Barril #${numero} actualizado`, 'success');
+      toast(`${botella.nombre_botella} actualizada`, 'success');
+      refreshCurrentPage();
 
-      const active = document.querySelector('.page.active');
-      if (active) {
-        const id = active.id.replace('page-', '');
-        if (id === 'barriles') { renderEstilosFilter(); renderBarriles(); }
-        else if (id === 'dashboard') renderDashboard();
+      const ops = [sb.from('botellas_cocteleria').update({
+        producto, marca, estado_actual: estado,
+        ubicacion_actual: UBICACION_MAP[estado], observaciones: obs,
+        ...(estadoCambio ? { fecha_ultimo_cambio: now } : {})
+      }).eq('id', editandoId)];
+      if (mov) ops.push(sb.from('movimientos_cocteleria').insert(mov));
+      const results = await Promise.all(ops);
+      const err = results.find(r => r.error)?.error;
+      if (err) {
+        Object.assign(botella, prev);
+        if (mov) movimientos = movimientos.filter(m => m.id_movimiento !== mov.id_movimiento);
+        toast(`Error al guardar edición: ${err.message}`, 'error');
+        refreshCurrentPage();
       }
     }
 
     // ─── ELIMINAR ─────────────────────────────────────────────────────────────────
-    function confirmarEliminar(id) {
-      const barril = barriles.find(b => b.id === id);
-      if (!barril) return;
-      if (!confirm(`¿Eliminar el barril #${barril.numero_barril} (${barril.estilo}) definitivamente?\n\nSu historial también será eliminado.`)) return;
-      barriles = barriles.filter(b => b.id !== id);
-      movimientos = movimientos.filter(m => m.id_barril !== id);
-      guardarDatos();
-      toast(`Barril #${barril.numero_barril} eliminado`, 'info');
+    async function confirmarEliminar(id) {
+      const botella = botellas.find(b => b.id === id);
+      if (!botella) return;
+      if (!confirm(`¿Eliminar "${botella.nombre_botella}" (${botella.producto}) definitivamente?\n\nSu historial también será eliminado.`)) return;
+
+      const botellaBackup = { ...botella };
+      const movsBackup    = movimientos.filter(m => m.id_botella === id);
+
+      botellas    = botellas.filter(b => b.id !== id);
+      movimientos = movimientos.filter(m => m.id_botella !== id);
+      toast(`"${botella.nombre_botella}" eliminada`, 'info');
       refreshCurrentPage();
+
+      const { error, count } = await sb.from('botellas_cocteleria').delete({ count: 'exact' }).eq('id', id);
+      if (error) {
+        botellas    = [...botellas, botellaBackup].sort((a, b) => a.nombre_botella.localeCompare(b.nombre_botella, undefined, { numeric: true }));
+        movimientos = [...movimientos, ...movsBackup];
+        toast(`Error al eliminar: ${error.message}`, 'error');
+        refreshCurrentPage();
+      } else if (count === 0) {
+        botellas    = [...botellas, botellaBackup].sort((a, b) => a.nombre_botella.localeCompare(b.nombre_botella, undefined, { numeric: true }));
+        movimientos = [...movimientos, ...movsBackup];
+        toast('Error: no se encontró la botella en la base de datos. Recargá la página.', 'error');
+        refreshCurrentPage();
+      }
     }
 
-    // ─── DETALLE BARRIL ───────────────────────────────────────────────────────────
+    // ─── DETALLE BOTELLA ──────────────────────────────────────────────────────────
     function verDetalle(id) {
-      const barril = barriles.find(b => b.id === id);
-      if (!barril) return;
+      const botella = botellas.find(b => b.id === id);
+      if (!botella) return;
       const hist = movimientos
-        .filter(m => m.id_barril === id)
+        .filter(m => m.id_botella === id)
         .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
-      const est = ESTADOS[barril.estado_actual];
-      document.getElementById('modalDetTitle').textContent = `Barril #${barril.numero_barril} · ${barril.estilo}`;
+      const est = ESTADOS[botella.estado_actual];
+      document.getElementById('modalDetTitle').textContent = `${botella.nombre_botella} · ${botella.producto} ${botella.marca || ''}`;
 
       const colorMap = { green: '#22c55e', yellow: '#f59e0b', red: '#ef4444', blue: '#3b82f6', gray: '#94a3b8' };
       const histHTML = hist.map(m => {
-        const e = ESTADOS[m.estado_nuevo];
+        const e   = ESTADOS[m.estado_nuevo];
         const col = colorMap[e?.color] || '#3b82f6';
         const anterior = m.estado_anterior ? (ESTADOS[m.estado_anterior]?.label || m.estado_anterior) : null;
         return `<div class="detail-hist-item">
-      <div class="dhi-dot" style="background:${col}"></div>
-      <div class="dhi-info">
-        <div class="dhi-cambio">${anterior ? `${anterior} → ` : 'Inicial: '}<strong>${e?.label || m.estado_nuevo}</strong></div>
-        ${m.observacion ? `<div style="color:var(--text3);font-size:.76rem;font-style:italic;">${esc(m.observacion)}</div>` : ''}
-      </div>
-      <div class="dhi-time">${formatFecha(m.fecha_hora)}</div>
-    </div>`;
+          <div class="dhi-dot" style="background:${col}"></div>
+          <div class="dhi-info">
+            <div class="dhi-cambio">${anterior ? `${anterior} → ` : 'Inicial: '}<strong>${e?.label || m.estado_nuevo}</strong></div>
+            ${m.observacion ? `<div style="color:var(--text3);font-size:.76rem;font-style:italic;">${esc(m.observacion)}</div>` : ''}
+          </div>
+          <div class="dhi-time">${formatFecha(m.fecha_hora)}</div>
+        </div>`;
       }).join('') || '<p style="color:var(--text3);font-size:.84rem;">Sin movimientos</p>';
 
       document.getElementById('modalDetBody').innerHTML = `
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
-      <div style="flex:1;min-width:140px;">
-        <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Estado</div>
-        <span class="badge ${est.badgeClass}"><span class="badge-dot"></span>${est.label}</span>
-      </div>
-      <div style="flex:1;min-width:140px;">
-        <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Ubicación</div>
-        <span style="font-size:.86rem;">${UBICACION_LABELS[barril.ubicacion_actual] || barril.ubicacion_actual}</span>
-      </div>
-      <div style="flex:1;min-width:140px;">
-        <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Capacidad</div>
-        <span style="font-size:.86rem;font-family:'JetBrains Mono',monospace;">50 L</span>
-      </div>
-    </div>
-    <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Historial de movimientos (${hist.length})</div>
-    <div style="max-height:280px;overflow-y:auto;">${histHTML}</div>
-  `;
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+          <div style="flex:1;min-width:140px;">
+            <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Estado</div>
+            <span class="badge ${est.badgeClass}"><span class="badge-dot"></span>${est.label}</span>
+          </div>
+          <div style="flex:1;min-width:140px;">
+            <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Ubicación</div>
+            <span style="font-size:.86rem;">${UBICACION_LABELS[botella.ubicacion_actual] || botella.ubicacion_actual}</span>
+          </div>
+          <div style="flex:1;min-width:140px;">
+            <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Producto</div>
+            <span style="font-size:.86rem;font-family:'JetBrains Mono',monospace;">${esc(botella.producto)}</span>
+          </div>
+        </div>
+        <div style="font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Historial de movimientos (${hist.length})</div>
+        <div style="max-height:280px;overflow-y:auto;">${histHTML}</div>
+      `;
       document.getElementById('modalDetalle').classList.add('open');
     }
 
@@ -2264,43 +2029,42 @@
       egresoSeleccionados.clear();
       actualizarBotonEgreso();
 
-      // Vacíos pendientes de devolución
-      const vacios = barriles
-        .filter(b => b.estado_actual === 'vacio')
-        .sort((a, b) => a.numero_barril.localeCompare(b.numero_barril, undefined, { numeric: true }));
+      const vacias = botellas
+        .filter(b => b.estado_actual === 'vacia')
+        .sort((a, b) => a.nombre_botella.localeCompare(b.nombre_botella, undefined, { numeric: true }));
 
-      const grid = document.getElementById('egresoGrid');
+      const grid  = document.getElementById('egresoGrid');
       const empty = document.getElementById('egresoVacioEmpty');
 
-      if (vacios.length === 0) {
+      if (vacias.length === 0) {
         grid.innerHTML = '';
         empty.style.display = 'block';
       } else {
         empty.style.display = 'none';
-        grid.innerHTML = vacios.map(b => `
-      <div class="egreso-card" id="ecard_${b.id}" onclick="toggleEgresoCard('${b.id}')">
-        <input type="checkbox" id="echk_${b.id}" onclick="event.stopPropagation();toggleEgresoCard('${b.id}')">
-        <div class="egreso-card-info">
-          <div class="egreso-card-num">#${esc(b.numero_barril)}</div>
-          <div class="egreso-card-estilo">${esc(b.estilo)}</div>
-          <div class="egreso-card-fecha">Vacío desde ${formatFecha(b.fecha_ultimo_cambio)}</div>
-        </div>
-      </div>`).join('');
+        grid.innerHTML = vacias.map(b => `
+          <div class="egreso-card" id="ecard_${b.id}" onclick="toggleEgresoCard('${b.id}')">
+            <input type="checkbox" id="echk_${b.id}" onclick="event.stopPropagation();toggleEgresoCard('${b.id}')">
+            <div class="egreso-card-info">
+              <div class="egreso-card-num">${esc(b.nombre_botella)} · ${esc(b.producto)}</div>
+              <div class="egreso-card-producto">${esc(b.marca || '')}</div>
+              <div class="egreso-card-fecha">Vacía desde ${formatFecha(b.fecha_ultimo_cambio)}</div>
+            </div>
+          </div>`).join('');
       }
 
       // Historial de egresos
-      const egresados = movimientos
-        .filter(m => m.estado_nuevo === 'egresado')
+      const egresadas = movimientos
+        .filter(m => m.estado_nuevo === 'egresada')
         .sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
 
-      document.getElementById('egresoHistList').innerHTML = egresados.length
-        ? egresados.map(m => renderMovItem(m, true)).join('')
-        : '<div class="empty-state"><div class="big">↩️</div><p>Sin devoluciones registradas aún</p></div>';
+      document.getElementById('egresoHistList').innerHTML = egresadas.length
+        ? egresadas.map(m => renderMovItem(m, true)).join('')
+        : '<div class="empty-state"><div class="big">↩️</div><p>Sin egresos registrados aún</p></div>';
     }
 
     function toggleEgresoCard(id) {
       const card = document.getElementById('ecard_' + id);
-      const chk = document.getElementById('echk_' + id);
+      const chk  = document.getElementById('echk_' + id);
       if (egresoSeleccionados.has(id)) {
         egresoSeleccionados.delete(id);
         card.classList.remove('selected');
@@ -2314,13 +2078,13 @@
     }
 
     function toggleSelTodos() {
-      const vacios = barriles.filter(b => b.estado_actual === 'vacio');
-      const todosSeleccionados = vacios.every(b => egresoSeleccionados.has(b.id));
-      vacios.forEach(b => {
+      const vacias = botellas.filter(b => b.estado_actual === 'vacia');
+      const todasSeleccionadas = vacias.every(b => egresoSeleccionados.has(b.id));
+      vacias.forEach(b => {
         const card = document.getElementById('ecard_' + b.id);
-        const chk = document.getElementById('echk_' + b.id);
+        const chk  = document.getElementById('echk_' + b.id);
         if (!card) return;
-        if (todosSeleccionados) {
+        if (todasSeleccionadas) {
           egresoSeleccionados.delete(b.id);
           card.classList.remove('selected');
           chk.checked = false;
@@ -2334,60 +2098,81 @@
     }
 
     function actualizarBotonEgreso() {
-      const n = egresoSeleccionados.size;
+      const n   = egresoSeleccionados.size;
       document.getElementById('egresoSelCount').textContent = n;
       const btn = document.getElementById('btnRegistrarEgreso');
-      btn.disabled = n === 0;
-      btn.style.opacity = n === 0 ? '.5' : '1';
-      btn.style.cursor = n === 0 ? 'not-allowed' : 'pointer';
+      btn.disabled       = n === 0;
+      btn.style.opacity  = n === 0 ? '.5' : '1';
+      btn.style.cursor   = n === 0 ? 'not-allowed' : 'pointer';
     }
 
     function abrirModalEgreso() {
       if (egresoSeleccionados.size === 0) return;
-      const n = egresoSeleccionados.size;
-      const nums = [...egresoSeleccionados]
-        .map(id => barriles.find(b => b.id === id))
+      const n    = egresoSeleccionados.size;
+      const noms = [...egresoSeleccionados]
+        .map(id => botellas.find(b => b.id === id))
         .filter(Boolean)
-        .map(b => `<strong>#${esc(b.numero_barril)}</strong> (${esc(b.estilo)})`)
+        .map(b => `<strong>${esc(b.nombre_botella)}</strong> (${esc(b.producto)})`)
         .join(', ');
       document.getElementById('modalEgresoDesc').innerHTML =
-        `Se registrará la devolución de <strong class="confirm-highlight">${n} barril${n > 1 ? 'es' : ''}</strong>:<br>
-     <span style="font-size:.82rem;color:var(--text3);line-height:1.7;">${nums}</span>`;
+        `Se registrará el egreso de <strong class="confirm-highlight">${n} botella${n > 1 ? 's' : ''}</strong>:<br>
+         <span style="font-size:.82rem;color:var(--text3);line-height:1.7;">${noms}</span>`;
       document.getElementById('egresoObsInput').value = '';
       document.getElementById('modalEgresoConfirm').onclick = ejecutarEgreso;
       document.getElementById('modalEgreso').classList.add('open');
       document.getElementById('egresoObsInput').focus();
     }
 
-    function ejecutarEgreso() {
-      const obs = document.getElementById('egresoObsInput').value.trim();
-      const now = new Date().toISOString();
-      const ids = [...egresoSeleccionados];
+    async function ejecutarEgreso() {
+      const obs        = document.getElementById('egresoObsInput').value.trim();
+      const now        = new Date().toISOString();
+      const ids        = [...egresoSeleccionados];
+      const nuevosMovs = [];
 
       ids.forEach(id => {
-        const barril = barriles.find(b => b.id === id);
-        if (!barril) return;
-        movimientos.push({
-          id_movimiento: genId(),
-          id_barril: id,
-          fecha_hora: now,
-          estado_anterior: barril.estado_actual,
-          estado_nuevo: 'egresado',
-          ubicacion_anterior: barril.ubicacion_actual,
-          ubicacion_nueva: 'devuelto_proveedor',
-          observacion: obs || 'Devolución al proveedor'
-        });
-        barril.estado_actual = 'egresado';
-        barril.ubicacion_actual = 'devuelto_proveedor';
-        barril.fecha_ultimo_cambio = now;
-        if (obs) barril.observaciones = obs;
+        const botella = botellas.find(b => b.id === id);
+        if (!botella) return;
+        const mov = {
+          id_movimiento: genId(), id_botella: id, fecha_hora: now,
+          estado_anterior: botella.estado_actual, estado_nuevo: 'egresada',
+          ubicacion_anterior: botella.ubicacion_actual, ubicacion_nueva: 'descartada',
+          observacion: obs || 'Egreso de botella vacía'
+        };
+        movimientos.push(mov);
+        nuevosMovs.push(mov);
+        botella.estado_actual    = 'egresada';
+        botella.ubicacion_actual = 'descartada';
+        botella.fecha_ultimo_cambio = now;
+        if (obs) botella.observaciones = obs;
       });
 
-      guardarDatos();
       closeModal('modalEgreso');
-      toast(`${ids.length} barril${ids.length > 1 ? 'es' : ''} devuelto${ids.length > 1 ? 's' : ''} al proveedor`, 'success');
+      toast(`${ids.length} botella${ids.length > 1 ? 's' : ''} egresada${ids.length > 1 ? 's' : ''}`, 'success');
       renderEgresos();
       renderDashboard();
+
+      const results = await Promise.all([
+        ...ids.map(id => sb.from('botellas_cocteleria').update({
+          estado_actual: 'egresada', ubicacion_actual: 'descartada',
+          fecha_ultimo_cambio: now, ...(obs ? { observaciones: obs } : {})
+        }).eq('id', id)),
+        sb.from('movimientos_cocteleria').insert(nuevosMovs)
+      ]);
+      const err = results.find(r => r.error)?.error;
+      if (err) {
+        ids.forEach(id => {
+          const botella  = botellas.find(b => b.id === id);
+          const movBackup = nuevosMovs.find(m => m.id_botella === id);
+          if (botella && movBackup) {
+            botella.estado_actual    = movBackup.estado_anterior;
+            botella.ubicacion_actual = movBackup.ubicacion_anterior;
+          }
+        });
+        movimientos = movimientos.filter(m => !nuevosMovs.find(nm => nm.id_movimiento === m.id_movimiento));
+        toast(`Error al registrar egreso: ${err.message}`, 'error');
+        renderEgresos();
+        renderDashboard();
+      }
     }
 
     // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -2396,8 +2181,8 @@
       if (!active) return;
       const id = active.id.replace('page-', '');
       if (id === 'dashboard') renderDashboard();
-      if (id === 'barriles') renderBarriles();
-      if (id === 'egresos') renderEgresos();
+      if (id === 'botellas')  { renderProductosFilter(); renderBotellas(); }
+      if (id === 'egresos')   renderEgresos();
       if (id === 'historial') renderHistorial();
     }
 
@@ -2405,7 +2190,6 @@
       document.getElementById(id).classList.remove('open');
     }
 
-    // Cerrar modales con click afuera
     document.querySelectorAll('.modal-bg').forEach(bg => {
       bg.addEventListener('click', e => {
         if (e.target === bg) bg.classList.remove('open');
@@ -2414,35 +2198,38 @@
 
     function esc(str) {
       if (str == null) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
     function formatFecha(iso) {
       if (!iso) return '—';
-      const d = new Date(iso);
+      const d   = new Date(iso);
       const pad = n => String(n).padStart(2, '0');
-      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      return `${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
 
     function toast(msg, type = 'success') {
       const container = document.getElementById('toastContainer');
-      const div = document.createElement('div');
-      div.className = `toast toast-${type}`;
-      const icons = { success: '✅', error: '❌', info: 'ℹ️' };
-      div.innerHTML = `<span>${icons[type] || ''}</span><span>${esc(msg)}</span>`;
+      const div       = document.createElement('div');
+      div.className   = `toast toast-${type}`;
+      const icons     = { success: '✅', error: '❌', info: 'ℹ️' };
+      div.innerHTML   = `<span>${icons[type] || ''}</span><span>${esc(msg)}</span>`;
       container.appendChild(div);
       setTimeout(() => div.remove(), 3000);
     }
 
     // Enter en modales
-    document.getElementById('nObs').addEventListener('keydown', e => { if (e.key === 'Enter') guardarNuevoBarril(); });
-    document.getElementById('nEstiloOtro').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('nNúmero').focus(); });
-    document.getElementById('obsInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('modalObsConfirm').click(); });
+    document.getElementById('nObs').addEventListener('keydown',           e => { if (e.key === 'Enter') guardarNuevaBotella(); });
+    document.getElementById('nProductoOtro').addEventListener('keydown',  e => { if (e.key === 'Enter') document.getElementById('nNombre').focus(); });
+    document.getElementById('obsInput').addEventListener('keydown',        e => { if (e.key === 'Enter') document.getElementById('modalObsConfirm').click(); });
     document.getElementById('egresoObsInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('modalEgresoConfirm').click(); });
 
     // ─── INIT ─────────────────────────────────────────────────────────────────────
-    cargarDatos();
-    renderDashboard();
+    (async () => {
+      await cargarDatos();
+      renderDashboard();
+      suscribirRealtime();
+    })();
   </script>
 </body>
 
