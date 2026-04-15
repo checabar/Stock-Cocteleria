@@ -1477,8 +1477,7 @@
           <td>
             <div class="action-btns">
               ${b.estado_actual === 'vacia' ? '' : `
-                ${b.estado_actual !== 'cerrada_stock' ? `<button class="action-btn ab-green"  onclick="cambiarEstado('${b.id}','cerrada_stock')">🟢 Cerrada</button>` : ''}
-                ${b.estado_actual !== 'abierta_barra' ? `<button class="action-btn ab-yellow" onclick="cambiarEstado('${b.id}','abierta_barra')">🍸 Abierta</button>` : ''}
+                ${b.estado_actual === 'cerrada_stock' ? `<button class="action-btn ab-yellow" onclick="cambiarEstado('${b.id}','abierta_barra')">🍸 Abierta</button>` : ''}
                 <button class="action-btn ab-red" onclick="cambiarEstado('${b.id}','vacia')">🔴 Vacía</button>
               `}
               <button class="action-btn ab-del"  title="Ver historial" onclick="verDetalle('${b.id}')">📋</button>
@@ -1490,8 +1489,7 @@
               <button class="action-btn ab-del btn-sm" onclick="toggleMobileMenu('${b.id}')">Acciones ▾</button>
               <div class="mobile-actions-menu" id="mobmenu_${b.id}">
                 ${b.estado_actual === 'vacia' ? '' : `
-                  ${b.estado_actual !== 'cerrada_stock' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','cerrada_stock');toggleMobileMenu('${b.id}')">🟢 Marcar Cerrada</button>` : ''}
-                  ${b.estado_actual !== 'abierta_barra' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','abierta_barra');toggleMobileMenu('${b.id}')">🍸 Marcar Abierta</button>` : ''}
+                  ${b.estado_actual === 'cerrada_stock' ? `<button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','abierta_barra');toggleMobileMenu('${b.id}')">🍸 Marcar Abierta</button>` : ''}
                   <button class="mobile-menu-item" onclick="cambiarEstado('${b.id}','vacia');toggleMobileMenu('${b.id}')">🔴 Marcar Vacía</button>
                 `}
                 <button class="mobile-menu-item" onclick="verDetalle('${b.id}');toggleMobileMenu('${b.id}')">📋 Ver historial</button>
