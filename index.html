@@ -1398,7 +1398,7 @@
 
       // Resumen por producto + marca
       const productosMap = {};
-      stock.forEach(b => {
+      botellas.forEach(b => {
         const key = `${b.producto}|||${b.marca || ''}`;
         if (!productosMap[key]) productosMap[key] = { producto: b.producto, marca: b.marca || '', cerrada: 0, abierta: 0, vacia: 0 };
         if (b.estado_actual === 'cerrada_stock') productosMap[key].cerrada++;
