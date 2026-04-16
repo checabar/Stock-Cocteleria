@@ -1043,7 +1043,6 @@
           <option value="">Todos los estados</option>
           <option value="cerrada_stock">Cerradas (Stock)</option>
           <option value="abierta_barra">Abiertas en Barra</option>
-          <option value="vacia">Vacías</option>
         </select>
         <select id="filterProducto" onchange="renderBotellas()">
           <option value="">Todos los productos</option>
@@ -1397,10 +1396,9 @@
         </div>
       `;
 
-      // Resumen por producto + marca (solo botellas activas, sin vacías)
+      // Resumen por producto + marca: incluye todos los productos pero solo cuenta activas
       const productosMap = {};
       botellas.forEach(b => {
-        if (b.estado_actual === 'vacia') return;
         const key = `${b.producto}|||${b.marca || ''}`;
         if (!productosMap[key]) productosMap[key] = { producto: b.producto, marca: b.marca || '', cerrada: 0, abierta: 0 };
         if (b.estado_actual === 'cerrada_stock') productosMap[key].cerrada++;
@@ -1411,10 +1409,12 @@
         .sort((a, b) => (b.cerrada + b.abierta) - (a.cerrada + a.abierta))
         .map(({ producto, marca, cerrada, abierta }) => {
           const tot = cerrada + abierta;
-          const pills = [
-            cerrada ? `<span class="ppill pp-g">${cerrada} cerrada${cerrada > 1 ? 's' : ''}</span>` : '',
-            abierta ? `<span class="ppill pp-y">${abierta} abierta${abierta > 1 ? 's' : ''}</span>` : ''
-          ].filter(Boolean).join('');
+          const pills = tot === 0
+            ? `<span class="ppill" style="background:rgba(100,100,120,.12);color:var(--text3);border:1px solid rgba(100,100,120,.18);">sin stock</span>`
+            : [
+                cerrada ? `<span class="ppill pp-g">${cerrada} cerrada${cerrada > 1 ? 's' : ''}</span>` : '',
+                abierta ? `<span class="ppill pp-y">${abierta} abierta${abierta > 1 ? 's' : ''}</span>` : ''
+              ].filter(Boolean).join('');
           return `
             <div class="producto-row">
               <div class="producto-name">
@@ -1422,7 +1422,7 @@
                 ${marca ? `<span style="font-size:.76rem;color:var(--text3);font-weight:400;"> · ${esc(marca)}</span>` : ''}
               </div>
               <div class="producto-pills">${pills}</div>
-              <div class="producto-total">${tot}</div>
+              <div class="producto-total" style="${tot === 0 ? 'color:var(--text3);' : ''}">${tot}</div>
             </div>`;
         }).join('');
 
@@ -1441,7 +1441,7 @@
 
     // ─── TABLA BOTELLAS ───────────────────────────────────────────────────────────
     function renderProductosFilter() {
-      const productos = [...new Set(botellas.map(b => b.producto))].sort();
+      const productos = [...new Set(botellas.filter(b => b.estado_actual !== 'vacia').map(b => b.producto))].sort();
       const sel = document.getElementById('filterProducto');
       const val = sel.value;
       sel.innerHTML = '<option value="">Todos los productos</option>' +
@@ -1453,14 +1453,15 @@
       const estado   = document.getElementById('filterEstado').value;
       const producto = document.getElementById('filterProducto').value;
 
-      let filtered = botellas.filter(b => {
+      const botellasActivas = botellas.filter(b => b.estado_actual !== 'vacia');
+      let filtered = botellasActivas.filter(b => {
         if (q && !b.nombre_botella.toLowerCase().includes(q) && !b.producto.toLowerCase().includes(q)) return false;
         if (estado   && b.estado_actual !== estado)   return false;
         if (producto && b.producto      !== producto) return false;
         return true;
       }).sort((a, b) => a.nombre_botella.localeCompare(b.nombre_botella, undefined, { numeric: true }));
 
-      document.getElementById('countLabel').textContent = `${filtered.length} / ${botellas.length} botellas`;
+      document.getElementById('countLabel').textContent = `${filtered.length} / ${botellasActivas.length} botellas`;
 
       const tbody = document.getElementById('botellasBody');
       tbody.innerHTML = filtered.map(b => {
