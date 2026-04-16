@@ -1397,24 +1397,23 @@
         </div>
       `;
 
-      // Resumen por producto + marca
+      // Resumen por producto + marca (solo botellas activas, sin vacías)
       const productosMap = {};
       botellas.forEach(b => {
+        if (b.estado_actual === 'vacia') return;
         const key = `${b.producto}|||${b.marca || ''}`;
-        if (!productosMap[key]) productosMap[key] = { producto: b.producto, marca: b.marca || '', cerrada: 0, abierta: 0, vacia: 0 };
+        if (!productosMap[key]) productosMap[key] = { producto: b.producto, marca: b.marca || '', cerrada: 0, abierta: 0 };
         if (b.estado_actual === 'cerrada_stock') productosMap[key].cerrada++;
         else if (b.estado_actual === 'abierta_barra') productosMap[key].abierta++;
-        else productosMap[key].vacia++;
       });
 
       const productosHTML = Object.values(productosMap)
-        .sort((a, b) => (b.cerrada + b.abierta + b.vacia) - (a.cerrada + a.abierta + a.vacia))
-        .map(({ producto, marca, cerrada, abierta, vacia }) => {
-          const tot = cerrada + abierta + vacia;
+        .sort((a, b) => (b.cerrada + b.abierta) - (a.cerrada + a.abierta))
+        .map(({ producto, marca, cerrada, abierta }) => {
+          const tot = cerrada + abierta;
           const pills = [
             cerrada ? `<span class="ppill pp-g">${cerrada} cerrada${cerrada > 1 ? 's' : ''}</span>` : '',
-            abierta ? `<span class="ppill pp-y">${abierta} abierta${abierta > 1 ? 's' : ''}</span>` : '',
-            vacia   ? `<span class="ppill pp-r">${vacia} vacía${vacia > 1 ? 's' : ''}</span>`       : ''
+            abierta ? `<span class="ppill pp-y">${abierta} abierta${abierta > 1 ? 's' : ''}</span>` : ''
           ].filter(Boolean).join('');
           return `
             <div class="producto-row">
